@@ -35,9 +35,6 @@ if st.button('1. 平衡'):
         # 平衡成功后，重新创建CQuestion对象并获取物质列表，保存到session_state
         question = balce.CQuestion(str(st.session_state.balanced_eq))
         left_substances, conf, right_substances = balce.splitCE(str(st.session_state.balanced_eq), to_mal=True)
-        # print('left_substances:', left_substances)
-        # print('right_substances:', right_substances)
-        # print('all_substances:', [('left', i, s) for i, s in enumerate(left_substances)] + [('right', i, s) for i, s in enumerate(right_substances)])
         with open('log.txt', 'a', encoding='utf-8') as f:
             f.write(f"left_substances: {left_substances}\n")
             f.write(f"right_substances: {right_substances}\n")
@@ -52,7 +49,7 @@ if st.button('1. 平衡'):
 if st.session_state.balanced_eq:
     st.markdown('---')
     st.subheader('2. 已平衡方程式')
-    st.write(str(st.session_state.balanced_eq)) # 确保平衡方程式被显示
+    st.success(str(st.session_state.balanced_eq)) # 使用success样式显示平衡方程式
     # 优先整体分子式匹配的表达式生成
     def extract_molecules_from_equation(equation):
         import re
@@ -134,7 +131,7 @@ if st.session_state.balanced_eq:
     ascii_formula = unicode_subscript_to_ascii(balanced_formula)
     formula_expr = parse_formula_to_formula_expr(ascii_formula, equation)
     zh_natural = parse_formula_to_zh_natural(ascii_formula, equation)
-    st.markdown(f'**文字表达式：** {formula_expr}')
+    st.markdown(f'**文字表达式：** \n{formula_expr}')
     st.markdown(f'{balanced_formula} 解析为"{zh_natural}"')
 
 # 计算物质的量

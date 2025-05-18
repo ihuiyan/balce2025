@@ -101,6 +101,10 @@ print(fla)
 2H₂+ O₂ = 2H₂O
 ```
 
+## Web界面操作
+
+`streamlit run balceapp/index.py`
+
 # Features
 
 ## 强大的解析器
