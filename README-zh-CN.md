@@ -105,6 +105,27 @@ print(fla)
 
 `streamlit run balceapp/index.py`
 
+## Deepseek API接口
+
+sk-395d444899dd4c6da3f049ab30e10db2
+
+`# Please install OpenAI SDK first: `pip install openai`
+
+from openai import OpenAI
+
+client = OpenAI(api_key="<DeepSeek API Key>", base_url="https://api.deepseek.com")
+
+response = client.chat.completions.create(
+    model="deepseek-chat",
+    messages=[
+        {"role": "system", "content": "You are a helpful assistant"},
+        {"role": "user", "content": "Hello"},
+    ],
+    stream=False
+)
+
+print(response.choices[0].message.content)
+
 # Features
 
 ## 强大的解析器

@@ -20,12 +20,10 @@ if 'known_amount' not in st.session_state:
     st.session_state.known_amount = 1.0
 
 st.title('化学方程式平衡器')
-st.markdown('''
-1. 输入化学方程式，点击"平衡"按钮，即可得到平衡后的方程式。
-''')
+st.subheader('1. 输入化学方程式')
 
 # 化学方程式输入
-equation = st.text_input('1. 输入化学方程式', 'H2 + O2 = H2O')
+equation = st.text_input('1. 输入化学方程式，点击"平衡"按钮，即可得到平衡后的方程式', 'H2 + O2 = H2O')
 
 if st.button('1. 平衡'):
     try:
@@ -45,92 +43,128 @@ if st.button('1. 平衡'):
     except Exception as e:
         st.error(f'错误：{e}')
 
+# 下标数字转普通数字
+def unicode_subscript_to_ascii(s):
+    unicode_to_ascii = str.maketrans('₀₁₂₃₄₅₆₇₈₉', '0123456789')
+    return s.translate(unicode_to_ascii)
+
 # 显示已平衡的方程式（如果存在）
 if st.session_state.balanced_eq:
     st.markdown('---')
     st.subheader('2. 已平衡方程式')
     st.success(str(st.session_state.balanced_eq)) # 使用success样式显示平衡方程式
+
     # 优先整体分子式匹配的表达式生成
-    def extract_molecules_from_equation(equation):
-        import re
-        eq = equation.replace(' ', '').replace('→', '=').replace('=', '=')
-        parts = re.split(r'[+=]', eq)
-        molecules = set()
-        for part in parts:
-            m = re.match(r'(\d*)([A-Za-z][A-Za-z0-9()\-]+)', part)
-            if m:
-                molecules.add(m.group(2))
-        return sorted(molecules, key=lambda x: -len(x))
-
-    def safe_molecule_pattern(molecules):
-        # molecules: list of str
-        if not molecules:
-            # fallback
-            return r'(\d*)([A-Za-z][A-Za-z0-9()\-]+)'
-        else:
-            return r'(\d*)(' + '|'.join(re.escape(mol) for mol in molecules) + r')'
-
     def parse_formula_to_formula_expr(formula, input_equation):
-        import re
-        formula = formula.replace(' ', '').replace('→', '=').replace('=', '=')
-        if '=' not in formula:
-            return ''
-        left, right = formula.split('=', 1)
-        molecules = extract_molecules_from_equation(input_equation)
-        # 调试日志
-        # with open('log.txt', 'a', encoding='utf-8') as f:
-        #     f.write(f"molecules: {molecules}\n")
-        pattern = safe_molecule_pattern(molecules)
+        """将化学方程式转换为含有中文名称的表达式"""
+        # 清理和分割方程式
+        formula = re.sub(r'\s+', '', formula)
+        formula = formula.replace('→', '=').replace('⇋', '=').replace('⇌', '=').replace('↔', '=')
+        parts = re.split(r'(=+)', formula)
+        left = parts[0]
+        right = parts[-1]
+
         def parse_side(side):
-            result = []
-            for m in re.finditer(pattern, side):
-                coef = m.group(1) or '1'
-                mol = m.group(2)
-                # 调试写入 log.txt
-                # with open('log.txt', 'a', encoding='utf-8') as f:
-                #     f.write(f"matched mol: '{mol}'\n")
-                zh = chem_names_zh.get(mol, mol)
-                result.append(f'{coef} {zh}')
-            return ' + '.join(result)
+            terms = []
+            molecules = re.split(r'\+', side)
+            for molecule_term in molecules:
+                if not molecule_term:
+                    continue
+                
+                # 提取系数和分子式
+                match = re.match(r'^(\d*)(.*?)$', molecule_term)
+                if not match:
+                    continue
+                    
+                coef, molecule = match.groups()
+                if not molecule:  # 跳过空匹配
+                    continue
+                    
+                # 处理系数
+                coef = coef if coef else '1'
+                
+                # 转换分子式并获取中文名
+                molecule_ascii = unicode_subscript_to_ascii(molecule)
+                name = chem_names_zh.get(molecule_ascii, molecule)
+                
+                # 组合系数和名称
+                term = name if coef == '1' else f"{coef}{name}"
+                terms.append(term)
+                
+            return ' + '.join(terms)
+
+        # 处理左右两边并组合结果
         left_expr = parse_side(left)
         right_expr = parse_side(right)
-        return f'{left_expr} = {right_expr}'
+        
+        # 获取反应条件（如果有）
+        conditions = ''.join(parts[1:-1]).strip('=') if len(parts) > 3 else ''
+        
+        # 组合最终结果
+        if conditions:
+            return f"{left_expr} ={conditions}= {right_expr}"
+        else:
+            return f"{left_expr} = {right_expr}"
 
     def parse_formula_to_zh_natural(formula, input_equation):
-        import re
-        formula = formula.replace(' ', '').replace('→', '=').replace('=', '=')
-        if '=' not in formula:
-            return ''
-        left, right = formula.split('=', 1)
-        molecules = extract_molecules_from_equation(input_equation)
-        pattern = safe_molecule_pattern(molecules)
-        def parse_side(side):
-            result = []
-            for m in re.finditer(pattern, side):
-                coef = m.group(1) or '1'
-                mol = m.group(2)
-                zh = chem_names_zh.get(mol, mol)
-                result.append(f'{coef}摩尔{zh}')
-            return result
-        left_zh = parse_side(left)
-        right_zh = parse_side(right)
-        left_str = '和'.join(left_zh)
-        right_str = '、'.join(right_zh)
-        return f'{left_str}反应生成{right_str}'
+        """将化学方程式转换为自然语言描述"""
+        # 清理和分割方程式
+        formula = re.sub(r'\s+', '', formula)
+        formula = formula.replace('→', '=').replace('⇋', '=').replace('⇌', '=').replace('↔', '=')
+        parts = re.split(r'(=+)', formula)
+        left = parts[0]
+        right = parts[-1]
+        conditions = ''.join(parts[1:-1]).strip('=') if len(parts) > 3 else ''
 
-    # 下标数字转普通数字
-    def unicode_subscript_to_ascii(s):
-        sub_map = str.maketrans('₀₁₂₃₄₅₆₇₈₉', '0123456789')
-        return s.translate(sub_map)
+        def parse_terms(side):
+            terms = []
+            molecules = re.split(r'\+', side)
+            for molecule_term in molecules:
+                if not molecule_term:
+                    continue
+                
+                # 提取系数和分子式
+                match = re.match(r'^(\d*)(.*?)$', molecule_term)
+                if not match:
+                    continue
+                    
+                coef, molecule = match.groups()
+                if not molecule:
+                    continue
+                    
+                # 处理系数
+                coef = coef if coef else '1'
+                
+                # 转换分子式并获取中文名
+                molecule_ascii = unicode_subscript_to_ascii(molecule)
+                name = chem_names_zh.get(molecule_ascii, molecule)
+                
+                # 组合系数和名称
+                terms.append(f"{coef}摩尔{name}")
+                
+            return terms
 
-    # 调试：写入 chem_names_zh keys
-    with open('log.txt', 'a', encoding='utf-8') as f:
-        f.write(f"chem_names_zh keys: {list(chem_names_zh.keys())}\n")
+        # 处理左右两边
+        left_terms = parse_terms(left)
+        right_terms = parse_terms(right)
 
+        # 组合结果
+        left_str = '和'.join(left_terms)
+        right_str = '、'.join(right_terms)
+        
+        # 添加反应条件（如果有）
+        if conditions:
+            return f"在{conditions}条件下，{left_str}反应生成{right_str}"
+        else:
+            return f"{left_str}反应生成{right_str}"
+
+    # 显示方程式的文字表达式和中文解析
     balanced_formula = str(st.session_state.balanced_eq)
     ascii_formula = unicode_subscript_to_ascii(balanced_formula)
     formula_expr = parse_formula_to_formula_expr(ascii_formula, equation)
     zh_natural = parse_formula_to_zh_natural(ascii_formula, equation)
+    st.markdown('---')
+    st.subheader('3. 方程式解析')
     st.markdown(f'**文字表达式：** \n{formula_expr}')
     st.markdown(f'{balanced_formula} 解析为"{zh_natural}"')
 
@@ -138,7 +172,7 @@ if st.session_state.balanced_eq:
 # 只有在平衡方程式和物质列表都存在时才显示计算部分
 if st.session_state.balanced_eq and 'all_substances' in st.session_state:
     st.markdown('---')
-    st.subheader('3. 计算物质的量')
+    st.subheader('4. 计算物质的量')
 
     try:
         # 创建CQuestion对象（在每次rerun时都需要创建，因为其状态不保存在session_state）
@@ -268,3 +302,57 @@ if st.session_state.balanced_eq and 'all_substances' in st.session_state:
                     st.error(f'计算错误：{e}')
     except Exception as e:
         st.error(f'初始化计算模块错误：{e}') # Catch potential errors during CQuestion creation or splitCE()
+
+# 在所有计算完成后添加反应条件部分
+    st.markdown('---')
+    st.subheader('5. 反应条件')
+    
+    # 使用列来排版
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        temperature = st.number_input('温度 (℃)', 
+            min_value=-273.15, 
+            value=25.0,
+            help='输入反应的温度，单位为摄氏度')
+            
+    with col2:
+        pressure = st.number_input('压力 (atm)',
+            min_value=0.0,
+            value=1.0,
+            help='输入反应的压力，单位为标准大气压')
+            
+    with col3:
+        catalyst = st.text_input('催化剂',
+            placeholder='例如：MnO₂、Fe³⁺等',
+            help='输入反应所需的催化剂')
+
+    # 添加其他条件的多选框
+    st.markdown('##### 其他条件：')
+    cols = st.columns(3)
+    with cols[0]:
+        heating = st.checkbox('加热', help='反应需要加热')
+    with cols[1]:
+        lighting = st.checkbox('光照', help='反应需要光照')
+    with cols[2]:
+        acid_base = st.selectbox('酸碱条件',
+            ['无', '酸性', '碱性'],
+            help='选择反应的酸碱条件')
+
+    # 显示反应条件总结
+    conditions = []
+    if temperature != 25.0:
+        conditions.append(f'温度: {temperature}℃')
+    if pressure != 1.0:
+        conditions.append(f'压力: {pressure}atm')
+    if catalyst:
+        conditions.append(f'催化剂: {catalyst}')
+    if heating:
+        conditions.append('需要加热')
+    if lighting:
+        conditions.append('需要光照')
+    if acid_base != '无':
+        conditions.append(f'需要{acid_base}条件')
+    
+    if conditions:
+        st.info('反应条件：' + '，'.join(conditions))
