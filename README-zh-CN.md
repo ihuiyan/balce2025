@@ -138,15 +138,7 @@ print(fla)
 
 ## 强大的 GUI & 工具链
 
-已写玩，之后再补文档
+- 已实现化学方程式自动配平，针对已配平的方程式自动转换文字表达式及文字解析
+- 计算物质的量，根据已知物质的量，计算其他物质的量（摩尔量及质量）
 
-# Futures
 
-1. 自动补全方程式 *<del>(🐷我绝对不会告诉你这又是因为哪些奇奇怪怪的题目的)</del>*
-2. 可以在多系统持久化加载及多进程适用且ROM无关的 memo
-
-# More about
-
-🙈
-I mostly got this idea from [here](https://www.zhihu.com/answer/157207788)🐶
-and i thought it's funny so i wrote this :)

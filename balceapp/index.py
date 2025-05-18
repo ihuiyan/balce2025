@@ -147,34 +147,43 @@ if st.session_state.balanced_eq and 'all_substances' in st.session_state:
         # 从session_state获取物质列表
         all_substances = st.session_state.all_substances
 
-        # 创建两列布局
-        col1, col2 = st.columns(2)
+        st.markdown('#### 3.1 输入已知物质的量')
+        st.markdown('##### 3.1.1 物质列表:')
+        # Simplified dropdown options, just show substance name
+        substance_options = {sub: i for i, sub in enumerate(all_substances)}
+        # 检查当前选择的物质是否还在列表中，防止因列表变化导致索引错误
+        current_selected_substance = list(substance_options.keys())[0] if len(substance_options) > 0 else None
+        if 'selected_substance_key' in st.session_state and st.session_state.selected_substance_key in substance_options:
+            current_selected_substance = st.session_state.selected_substance_key
 
-        with col1:
-            st.markdown('#### 3.1 输入已知物质的量')
-            st.markdown('##### 3.1.1 物质列表:')
-            # Simplified dropdown options, just show substance name
-            substance_options = {sub: i for i, sub in enumerate(all_substances)}
-            # 检查当前选择的物质是否还在列表中，防止因列表变化导致索引错误
-            current_selected_substance = list(substance_options.keys())[0] if len(substance_options) > 0 else None
-            if 'selected_substance_key' in st.session_state and st.session_state.selected_substance_key in substance_options:
-                current_selected_substance = st.session_state.selected_substance_key
+        # 下拉框显示物质名和中文名称（substance[2] + 中文名称）
+        # 转换物质为 ASCII 格式以匹配中文名称
+        display_names = []
+        for sub in substance_options.keys():
+            formula_ascii = unicode_subscript_to_ascii(sub[2])
+            zh_name = chem_names_zh.get(formula_ascii, formula_ascii)
+            display_names.append((sub[2], zh_name))
+        display_labels = [f"{formula} [{zh_name}]" for formula, zh_name in display_names]
+        
+        if current_selected_substance:
+            current_formula_ascii = unicode_subscript_to_ascii(current_selected_substance[2])
+            selected_idx = [pair[0] for pair in display_names].index(current_selected_substance[2])
+        else:
+            selected_idx = 0
+            
+        selected_display = st.selectbox('选择已知物质', display_labels, index=selected_idx)
+        # 从显示标签中提取化学式
+        selected_formula = selected_display.split(' [')[0]
+        # 反查元组
+        selected_substance = [k for k in substance_options.keys() if k[2] == selected_formula][0]
+        st.session_state.selected_substance_key = selected_substance
 
-            # 下拉框显示物质名（substance[2]）
-            display_names = [sub[2] for sub in substance_options.keys()]
-            selected_idx = display_names.index(current_selected_substance[2]) if current_selected_substance else 0
-            selected_display = st.selectbox('选择已知物质', display_names, index=selected_idx)
-            # 反查元组
-            selected_substance = [k for k in substance_options.keys() if k[2] == selected_display][0]
-            st.session_state.selected_substance_key = selected_substance
-
-            st.session_state.known_amount = st.number_input('输入物质的量(摩尔)',
+        st.session_state.known_amount = st.number_input('输入物质的量(摩尔)',
                                                           min_value=0.0,
                                                           value=st.session_state.known_amount, key='known_amount_input') # 添加key避免冲突
 
-        with col2:
-            st.markdown('#### 3.2 计算结果')
-            if st.button('计算', key='calculate_button'): # 添加key避免冲突
+        st.markdown('#### 3.2 计算结果')
+        if st.button('计算', key='calculate_button'): # 添加key避免冲突
                 try:
                     # Reuse the same list of substances
                     actual_substances = all_substances
@@ -236,8 +245,11 @@ if st.session_state.balanced_eq and 'all_substances' in st.session_state:
                                 else:
                                     mol_value = amount / molar_mass
                             total_mass = mol_value * molar_mass
+                            # 获取物质的中文名称
+                            substance_ascii = unicode_subscript_to_ascii(substance[2])
+                            zh_name = chem_names_zh.get(substance_ascii, substance_ascii)
                             table_data.append({
-                                '物质': substance[2],
+                                '物质': f"{substance[2]} [{zh_name}]",
                                 '物质的量 (摩尔)': f'{mol_value:.2f}',
                                 '摩尔质量 (g/mol)': f'{molar_mass:.2f}',
                                 '总质量 (g)': f'{total_mass:.2f}'
