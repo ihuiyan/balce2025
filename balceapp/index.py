@@ -578,10 +578,14 @@ if st.session_state.balanced_eq and 'all_substances' in st.session_state:
                     value=st.session_state.experiment_notes,
                     height=400,
                     help="记录实验过程中的观察数据、测量结果和重要现象"
-                )
-
-                # 文件上传部分
+                )                # 文件上传部分
                 st.markdown('##### 附件上传')
+                
+                # 确保上传目录存在
+                upload_dir = os.path.join(os.path.dirname(__file__), 'uploads')
+                if not os.path.exists(upload_dir):
+                    os.makedirs(upload_dir)
+
                 uploaded_files = st.file_uploader(
                     "上传实验相关文件（支持图片、文档等）",
                     accept_multiple_files=True,
@@ -595,8 +599,40 @@ if st.session_state.balanced_eq and 'all_substances' in st.session_state:
                         file_size = len(file.getvalue()) / 1024  # KB
                         size_str = f"{file_size:.1f} KB" if file_size < 1024 else f"{file_size/1024:.1f} MB"
                         
-                        # 显示文件信息
+                        # 生成文件保存路径
+                        timestamp = pd.Timestamp.now().strftime('%Y%m%d%H%M%S')
+                        safe_filename = re.sub(r'[^\w\-_\.]', '_', file.name)
+                        save_path = os.path.join(upload_dir, f"{timestamp}_{safe_filename}")
+                        
+                        # 保存文件
+                        with open(save_path, 'wb') as f:
+                            f.write(file.getvalue())
+                        
+                        # 显示文件信息和保存位置
                         st.write(f"文件名：{file.name} （{size_str}）")
+                        st.success(f"文件已保存到：{os.path.basename(save_path)}")
+                        
+                # 显示已上传的文件列表
+                if os.path.exists(upload_dir):
+                    files = os.listdir(upload_dir)
+                    if files:
+                        st.markdown('##### 已上传的文件：')
+                        for filename in files:
+                            file_path = os.path.join(upload_dir, filename)
+                            file_size = os.path.getsize(file_path) / 1024  # KB
+                            size_str = f"{file_size:.1f} KB" if file_size < 1024 else f"{file_size/1024:.1f} MB"
+                            col1, col2 = st.columns([3, 1])                            
+                            col1.write(f"{filename}")
+                            if col2.button("删除", key=f"del_file_{filename}"):
+                                try:
+                                    os.remove(file_path)
+                                    files.remove(filename)  # 从列表中删除文件
+                                    if 'uploaded_files' in st.session_state:
+                                        st.session_state.pop('uploaded_files')  # 清除上传文件的缓存
+                                    st.success(f"文件 {filename} 已成功删除")
+                                    st.rerun()  # 使用 rerun 重新加载页面
+                                except Exception as e:
+                                    st.error(f"删除文件时出错：{str(e)}")
 
                 # 保存按钮
                 if st.button('保存实验记录', type='primary', help='保存实验记录和上传的文件', use_container_width=True):
