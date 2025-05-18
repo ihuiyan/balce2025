@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["balce", "balceapp"]
+
+[project]
+name = "balce"
+version = "1.2.0"
+authors = [
+    {name = "hibays", email = "hibays@github.com"},
+]
+description = "A simplify and fast chemical equation parser and balancer in pure python."
+keywords = ["Chemical", "Pure Python", "Math", "Linear Algebra", "fmatx", "Regax", "Balance"]
+readme = "README.md"
+requires-python = ">=3.8"
+license = {file = "LICENSE"}
+classifiers = [
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+]
+dependencies = [
+    "fmatx",
+]
+
+[project.urls]
+documentation = "https://readthedocs.org"
+repository = "https://gitee.com/hibays/balce.git"
+
+[project.optional-dependencies]
+gui = [
+    "balceapp",
+    "toga",
+]
+
+[project.scripts]
+balce = "balce.__main__:main"

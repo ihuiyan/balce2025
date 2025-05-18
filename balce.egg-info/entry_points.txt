@@ -1,0 +1,2 @@
+[console_scripts]
+balce = balce.__main__:main
