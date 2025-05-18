@@ -7,8 +7,13 @@ import re
 import pandas as pd
 import os
 import sys
+from openai import OpenAI
 sys.path.append(os.path.abspath('.'))
 from chem_names_zh import chem_names_zh
+from balceapp.config import DEEPSEEK_API_KEY, DEEPSEEK_BASE_URL
+
+# 初始化Deepseek客户端
+client = OpenAI(api_key=DEEPSEEK_API_KEY, base_url=DEEPSEEK_BASE_URL)
 
 # 创建单位注册表
 ureg = UnitRegistry()
@@ -303,9 +308,99 @@ if st.session_state.balanced_eq and 'all_substances' in st.session_state:
     except Exception as e:
         st.error(f'初始化计算模块错误：{e}') # Catch potential errors during CQuestion creation or splitCE()
 
-# 在所有计算完成后添加反应条件部分
+    # 在计算完成后添加反应条件变量定义
+    conditions = []
+    temperature = 25.0
+    pressure = 1.0
+    catalyst = ""
+    heating = False
+    lighting = False
+    acid_base = "无"
+
+    # AI分析部分
     st.markdown('---')
-    st.subheader('5. 反应条件')
+    st.subheader('5. AI反应分析')
+    
+    # AI分析按钮和状态
+    col1, col2 = st.columns([2, 10])
+    with col1:
+        show_analysis = st.button('AI建议', help='使用AI分析当前反应的类型、条件和机理')
+        
+    # 如果点击了按钮
+    if show_analysis:
+        if not st.session_state.balanced_eq:
+            with col2:
+                st.warning("请先输入并平衡化学方程式")
+        elif not DEEPSEEK_API_KEY or DEEPSEEK_API_KEY == "your-api-key-here":
+            with col2:
+                st.error("请先配置 Deepseek API 密钥。参考 README-zh-CN.md 中的配置说明。")
+        else:
+            try:
+                # 在按钮旁边显示加载状态
+                with col2:
+                    with st.spinner('AI正在思考中...'):
+                        # 准备提示信息
+                        conditions_str = '标准状态'
+                        prompt = f"""请分析以下化学反应：
+方程式：{str(st.session_state.balanced_eq)}
+反应条件：{conditions_str}
+
+请从以下几个方面进行专业的分析：
+1. 反应类型（氧化还原/酸碱/沉淀/复分解等）
+2. 反应必要条件和注意事项
+3. 反应机理简述
+4. 实验操作建议
+5. 实验装置准备
+例如：如果是气体反应，可能需要密闭容器或气体收集装置。
+如果是液体反应，可能需要烧杯、试管或反应釜。
+如果是高温反应，可能需要加热设备。
+6. 安全准备
+例如：
+是否需要佩戴防护装备（如手套、护目镜、实验室外套）？
+是否需要在通风橱中进行操作？
+是否需要准备灭火器或其他应急设备？
+7. 记录和分析建议
+准备好记录实验数据的工具（如笔记本、数据表格等）。
+如果是实验，需要明确观察和测量的指标（如反应时间、产物的量、颜色变化等）。
+如果是工业生产，可能需要建立质量控制标准。
+8. 经济和环保评估（工业生产）
+如果是工业生产，需要考虑反应的经济性和环保性。
+例如：
+反应物和生成物的成本如何？
+是否会产生有害废物？如何处理？
+是否有更高效或更环保的替代方案？
+
+请用专业且简洁的语言回答，重点突出关键信息。"""
+                        
+                        # 调用Deepseek API
+                        response = client.chat.completions.create(
+                            model="deepseek-chat",
+                            messages=[
+                                {"role": "system", "content": "你是一位专业的化学分析专家，擅长分析化学反应机理和实验条件。请用简洁专业的语言回答。"},
+                                {"role": "user", "content": prompt}
+                            ],
+                            temperature=0.7,
+                            stream=False
+                        )
+                        
+                        # 显示分析结果
+                        analysis = response.choices[0].message.content
+                        st.success("分析完成")
+                
+                # 在按钮下方全宽度显示分析结果
+                st.markdown(analysis)
+            
+            except Exception as e:
+                with col2:
+                    error_msg = str(e).lower()
+                    if "api_key" in error_msg or "unauthorized" in error_msg:
+                        st.error("API密钥无效或未正确配置。请检查配置文件或环境变量中的API密钥。")
+                    else:
+                        st.error(f"AI分析出错：{str(e)}")
+
+    # 反应条件部分
+    st.markdown('---')
+    st.subheader('6. 反应条件')
     
     # 使用列来排版
     col1, col2, col3 = st.columns(3)
@@ -313,17 +408,18 @@ if st.session_state.balanced_eq and 'all_substances' in st.session_state:
     with col1:
         temperature = st.number_input('温度 (℃)', 
             min_value=-273.15, 
-            value=25.0,
+            value=temperature,
             help='输入反应的温度，单位为摄氏度')
             
     with col2:
         pressure = st.number_input('压力 (atm)',
             min_value=0.0,
-            value=1.0,
+            value=pressure,
             help='输入反应的压力，单位为标准大气压')
             
     with col3:
         catalyst = st.text_input('催化剂',
+            value=catalyst,
             placeholder='例如：MnO₂、Fe³⁺等',
             help='输入反应所需的催化剂')
 
@@ -331,12 +427,13 @@ if st.session_state.balanced_eq and 'all_substances' in st.session_state:
     st.markdown('##### 其他条件：')
     cols = st.columns(3)
     with cols[0]:
-        heating = st.checkbox('加热', help='反应需要加热')
+        heating = st.checkbox('加热', value=heating, help='反应需要加热')
     with cols[1]:
-        lighting = st.checkbox('光照', help='反应需要光照')
+        lighting = st.checkbox('光照', value=lighting, help='反应需要光照')
     with cols[2]:
         acid_base = st.selectbox('酸碱条件',
             ['无', '酸性', '碱性'],
+            index=['无', '酸性', '碱性'].index(acid_base),
             help='选择反应的酸碱条件')
 
     # 显示反应条件总结
@@ -354,5 +451,6 @@ if st.session_state.balanced_eq and 'all_substances' in st.session_state:
     if acid_base != '无':
         conditions.append(f'需要{acid_base}条件')
     
+    # 显示反应条件
     if conditions:
         st.info('反应条件：' + '，'.join(conditions))

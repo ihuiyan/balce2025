@@ -416,3 +416,172 @@ chem_names_zh keys: ['H2', 'O2', 'H2O', 'KMnO4', 'HCl', 'KCl', 'MnCl2', 'Cl2', '
 用于摩尔质量的 formula: HNO3
 用于摩尔质量的 formula: CO2
 用于摩尔质量的 formula: H2O
+left_substances: ['H₂', 'O₂']
+right_substances: ['H₂O']
+all_substances: [('left', 0, 'H₂'), ('left', 1, 'O₂'), ('right', 0, 'H₂O')]
+left_substances: ['H₂', 'O₂']
+right_substances: ['H₂O']
+all_substances: [('left', 0, 'H₂'), ('left', 1, 'O₂'), ('right', 0, 'H₂O')]
+用于摩尔质量的 formula: H2O
+用于摩尔质量的 formula: H2
+用于摩尔质量的 formula: O2
+用于摩尔质量的 formula: H2O
+left_substances: ['H₂', 'O₂']
+right_substances: ['H₂O']
+all_substances: [('left', 0, 'H₂'), ('left', 1, 'O₂'), ('right', 0, 'H₂O')]
+left_substances: ['H₂', 'O₂']
+right_substances: ['H₂O']
+all_substances: [('left', 0, 'H₂'), ('left', 1, 'O₂'), ('right', 0, 'H₂O')]
+left_substances: ['K₄Fe(CN)₆', 'KMnO₄', 'H₂SO₄']
+right_substances: ['K₃Fe(CN)₆', 'MnSO₄', 'K₂SO₄', 'H₂O']
+all_substances: [('left', 0, 'K₄Fe(CN)₆'), ('left', 1, 'KMnO₄'), ('left', 2, 'H₂SO₄'), ('right', 0, 'K₃Fe(CN)₆'), ('right', 1, 'MnSO₄'), ('right', 2, 'K₂SO₄'), ('right', 3, 'H₂O')]
+left_substances: ['H₂', 'O₂']
+right_substances: ['H₂O']
+all_substances: [('left', 0, 'H₂'), ('left', 1, 'O₂'), ('right', 0, 'H₂O')]
+left_substances: ['K₄Fe(CN)₆', 'KMnO₄', 'H₂SO₄']
+right_substances: ['K₃Fe(CN)₆', 'MnSO₄', 'K₂SO₄', 'H₂O']
+all_substances: [('left', 0, 'K₄Fe(CN)₆'), ('left', 1, 'KMnO₄'), ('left', 2, 'H₂SO₄'), ('right', 0, 'K₃Fe(CN)₆'), ('right', 1, 'MnSO₄'), ('right', 2, 'K₂SO₄'), ('right', 3, 'H₂O')]
+left_substances: ['K₄Fe(CN)₆', 'KMnO₄', 'H₂SO₄']
+right_substances: ['K₃Fe(CN)₆', 'MnSO₄', 'K₂SO₄', 'H₂O']
+all_substances: [('left', 0, 'K₄Fe(CN)₆'), ('left', 1, 'KMnO₄'), ('left', 2, 'H₂SO₄'), ('right', 0, 'K₃Fe(CN)₆'), ('right', 1, 'MnSO₄'), ('right', 2, 'K₂SO₄'), ('right', 3, 'H₂O')]
+left_substances: ['K₄Fe(CN)₆', 'KMnO₄', 'H₂SO₄']
+right_substances: ['K₃Fe(CN)₆', 'MnSO₄', 'K₂SO₄', 'H₂O']
+all_substances: [('left', 0, 'K₄Fe(CN)₆'), ('left', 1, 'KMnO₄'), ('left', 2, 'H₂SO₄'), ('right', 0, 'K₃Fe(CN)₆'), ('right', 1, 'MnSO₄'), ('right', 2, 'K₂SO₄'), ('right', 3, 'H₂O')]
+left_substances: ['H₂', 'O₂']
+right_substances: ['H₂O']
+all_substances: [('left', 0, 'H₂'), ('left', 1, 'O₂'), ('right', 0, 'H₂O')]
+left_substances: ['K₄Fe(CN)₆', 'KMnO₄', 'H₂SO₄']
+right_substances: ['K₃Fe(CN)₆', 'MnSO₄', 'K₂SO₄', 'H₂O']
+all_substances: [('left', 0, 'K₄Fe(CN)₆'), ('left', 1, 'KMnO₄'), ('left', 2, 'H₂SO₄'), ('right', 0, 'K₃Fe(CN)₆'), ('right', 1, 'MnSO₄'), ('right', 2, 'K₂SO₄'), ('right', 3, 'H₂O')]
+left_substances: ['K₄Fe(CN)₆', 'KMnO₄', 'H₂SO₄']
+right_substances: ['K₃Fe(CN)₆', 'MnSO₄', 'K₂SO₄', 'H₂O']
+all_substances: [('left', 0, 'K₄Fe(CN)₆'), ('left', 1, 'KMnO₄'), ('left', 2, 'H₂SO₄'), ('right', 0, 'K₃Fe(CN)₆'), ('right', 1, 'MnSO₄'), ('right', 2, 'K₂SO₄'), ('right', 3, 'H₂O')]
+left_substances: ['K₄Fe(CN)₆', 'KMnO₄', 'H₂SO₄']
+right_substances: ['K₃Fe(CN)₆', 'MnSO₄', 'K₂SO₄', 'H₂O']
+all_substances: [('left', 0, 'K₄Fe(CN)₆'), ('left', 1, 'KMnO₄'), ('left', 2, 'H₂SO₄'), ('right', 0, 'K₃Fe(CN)₆'), ('right', 1, 'MnSO₄'), ('right', 2, 'K₂SO₄'), ('right', 3, 'H₂O')]
+left_substances: ['H₂', 'O₂']
+right_substances: ['H₂O']
+all_substances: [('left', 0, 'H₂'), ('left', 1, 'O₂'), ('right', 0, 'H₂O')]
+left_substances: ['K₄Fe(CN)₆', 'KMnO₄', 'H₂SO₄']
+right_substances: ['K₃Fe(CN)₆', 'MnSO₄', 'K₂SO₄', 'H₂O']
+all_substances: [('left', 0, 'K₄Fe(CN)₆'), ('left', 1, 'KMnO₄'), ('left', 2, 'H₂SO₄'), ('right', 0, 'K₃Fe(CN)₆'), ('right', 1, 'MnSO₄'), ('right', 2, 'K₂SO₄'), ('right', 3, 'H₂O')]
+用于摩尔质量的 formula: K3Fe(CN)6
+用于摩尔质量的 formula: K4Fe(CN)6
+用于摩尔质量的 formula: KMnO4
+用于摩尔质量的 formula: H2SO4
+用于摩尔质量的 formula: K3Fe(CN)6
+用于摩尔质量的 formula: MnSO4
+用于摩尔质量的 formula: K2SO4
+用于摩尔质量的 formula: H2O
+left_substances: ['H₂', 'O₂']
+right_substances: ['H₂O']
+all_substances: [('left', 0, 'H₂'), ('left', 1, 'O₂'), ('right', 0, 'H₂O')]
+left_substances: ['K₄Fe(CN)₆', 'KMnO₄', 'H₂SO₄']
+right_substances: ['K₃Fe(CN)₆', 'MnSO₄', 'K₂SO₄', 'H₂O']
+all_substances: [('left', 0, 'K₄Fe(CN)₆'), ('left', 1, 'KMnO₄'), ('left', 2, 'H₂SO₄'), ('right', 0, 'K₃Fe(CN)₆'), ('right', 1, 'MnSO₄'), ('right', 2, 'K₂SO₄'), ('right', 3, 'H₂O')]
+用于摩尔质量的 formula: K4Fe(CN)6
+用于摩尔质量的 formula: K4Fe(CN)6
+用于摩尔质量的 formula: KMnO4
+用于摩尔质量的 formula: H2SO4
+用于摩尔质量的 formula: K3Fe(CN)6
+用于摩尔质量的 formula: MnSO4
+用于摩尔质量的 formula: K2SO4
+用于摩尔质量的 formula: H2O
+left_substances: ['Fe₂O₃', 'H₂']
+right_substances: ['Fe', 'H₂O']
+all_substances: [('left', 0, 'Fe₂O₃'), ('left', 1, 'H₂'), ('right', 0, 'Fe'), ('right', 1, 'H₂O')]
+left_substances: ['H₂', 'O₂']
+right_substances: ['H₂O']
+all_substances: [('left', 0, 'H₂'), ('left', 1, 'O₂'), ('right', 0, 'H₂O')]
+left_substances: ['Fe', 'Cl₂']
+right_substances: ['FeCl₃']
+all_substances: [('left', 0, 'Fe'), ('left', 1, 'Cl₂'), ('right', 0, 'FeCl₃')]
+用于摩尔质量的 formula: Fe
+用于摩尔质量的 formula: Fe
+用于摩尔质量的 formula: Cl2
+用于摩尔质量的 formula: FeCl3
+left_substances: ['Fe', 'Cl₂']
+right_substances: ['FeCl₃']
+all_substances: [('left', 0, 'Fe'), ('left', 1, 'Cl₂'), ('right', 0, 'FeCl₃')]
+left_substances: ['Fe', 'Cl₂']
+right_substances: ['FeCl₃']
+all_substances: [('left', 0, 'Fe'), ('left', 1, 'Cl₂'), ('right', 0, 'FeCl₃')]
+用于摩尔质量的 formula: FeCl3
+用于摩尔质量的 formula: Fe
+用于摩尔质量的 formula: Cl2
+用于摩尔质量的 formula: FeCl3
+left_substances: ['K₄Fe(CN)₆', 'H₂SO₄', 'H₂O']
+right_substances: ['K₂SO₄', 'FeSO₄', '(NH₄)₂SO₄', 'CO']
+all_substances: [('left', 0, 'K₄Fe(CN)₆'), ('left', 1, 'H₂SO₄'), ('left', 2, 'H₂O'), ('right', 0, 'K₂SO₄'), ('right', 1, 'FeSO₄'), ('right', 2, '(NH₄)₂SO₄'), ('right', 3, 'CO')]
+用于摩尔质量的 formula: K4Fe(CN)6
+用于摩尔质量的 formula: K4Fe(CN)6
+用于摩尔质量的 formula: H2SO4
+用于摩尔质量的 formula: H2O
+用于摩尔质量的 formula: K2SO4
+用于摩尔质量的 formula: FeSO4
+用于摩尔质量的 formula: (NH4)2SO4
+用于摩尔质量的 formula: CO
+left_substances: ['H₂', 'O₂']
+right_substances: ['H₂O']
+all_substances: [('left', 0, 'H₂'), ('left', 1, 'O₂'), ('right', 0, 'H₂O')]
+用于摩尔质量的 formula: H2
+用于摩尔质量的 formula: H2
+用于摩尔质量的 formula: O2
+用于摩尔质量的 formula: H2O
+left_substances: ['H₂', 'O₂']
+right_substances: ['H₂O']
+all_substances: [('left', 0, 'H₂'), ('left', 1, 'O₂'), ('right', 0, 'H₂O')]
+left_substances: ['K₄Fe(CN)₆', 'H₂SO₄', 'H₂O']
+right_substances: ['K₂SO₄', 'FeSO₄', '(NH₄)₂SO₄', 'CO']
+all_substances: [('left', 0, 'K₄Fe(CN)₆'), ('left', 1, 'H₂SO₄'), ('left', 2, 'H₂O'), ('right', 0, 'K₂SO₄'), ('right', 1, 'FeSO₄'), ('right', 2, '(NH₄)₂SO₄'), ('right', 3, 'CO')]
+left_substances: ['K₄Fe(CN)₆', 'H₂SO₄', 'H₂O']
+right_substances: ['K₂SO₄', 'FeSO₄', '(NH₄)₂SO₄', 'CO']
+all_substances: [('left', 0, 'K₄Fe(CN)₆'), ('left', 1, 'H₂SO₄'), ('left', 2, 'H₂O'), ('right', 0, 'K₂SO₄'), ('right', 1, 'FeSO₄'), ('right', 2, '(NH₄)₂SO₄'), ('right', 3, 'CO')]
+用于摩尔质量的 formula: H2O
+用于摩尔质量的 formula: K4Fe(CN)6
+用于摩尔质量的 formula: H2SO4
+用于摩尔质量的 formula: H2O
+用于摩尔质量的 formula: K2SO4
+用于摩尔质量的 formula: FeSO4
+用于摩尔质量的 formula: (NH4)2SO4
+用于摩尔质量的 formula: CO
+left_substances: ['K₄Fe(CN)₆', 'H₂SO₄', 'H₂O']
+right_substances: ['K₂SO₄', 'FeSO₄', '(NH₄)₂SO₄', 'CO']
+all_substances: [('left', 0, 'K₄Fe(CN)₆'), ('left', 1, 'H₂SO₄'), ('left', 2, 'H₂O'), ('right', 0, 'K₂SO₄'), ('right', 1, 'FeSO₄'), ('right', 2, '(NH₄)₂SO₄'), ('right', 3, 'CO')]
+left_substances: ['C₆H₅COOH', 'O₂']
+right_substances: ['CO₂', 'H₂O']
+all_substances: [('left', 0, 'C₆H₅COOH'), ('left', 1, 'O₂'), ('right', 0, 'CO₂'), ('right', 1, 'H₂O')]
+用于摩尔质量的 formula: CO2
+用于摩尔质量的 formula: C6H5COOH
+用于摩尔质量的 formula: O2
+用于摩尔质量的 formula: CO2
+用于摩尔质量的 formula: H2O
+left_substances: ['C₆H₅COOH', 'O₂']
+right_substances: ['CO₂', 'H₂O']
+all_substances: [('left', 0, 'C₆H₅COOH'), ('left', 1, 'O₂'), ('right', 0, 'CO₂'), ('right', 1, 'H₂O')]
+用于摩尔质量的 formula: CO2
+用于摩尔质量的 formula: C6H5COOH
+用于摩尔质量的 formula: O2
+用于摩尔质量的 formula: CO2
+用于摩尔质量的 formula: H2O
+left_substances: ['H₂', 'O₂']
+right_substances: ['H₂O']
+all_substances: [('left', 0, 'H₂'), ('left', 1, 'O₂'), ('right', 0, 'H₂O')]
+left_substances: ['H₂', 'O₂']
+right_substances: ['H₂O']
+all_substances: [('left', 0, 'H₂'), ('left', 1, 'O₂'), ('right', 0, 'H₂O')]
+用于摩尔质量的 formula: H2
+用于摩尔质量的 formula: H2
+用于摩尔质量的 formula: O2
+用于摩尔质量的 formula: H2O
+left_substances: ['H₂', 'O₂']
+right_substances: ['H₂O']
+all_substances: [('left', 0, 'H₂'), ('left', 1, 'O₂'), ('right', 0, 'H₂O')]
+用于摩尔质量的 formula: O2
+用于摩尔质量的 formula: H2
+用于摩尔质量的 formula: O2
+用于摩尔质量的 formula: H2O
+用于摩尔质量的 formula: O2
+用于摩尔质量的 formula: H2
+用于摩尔质量的 formula: O2
+用于摩尔质量的 formula: H2O

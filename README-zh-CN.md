@@ -103,11 +103,28 @@ print(fla)
 
 ## Web界面操作
 
+### 基本使用
 `streamlit run balceapp/index.py`
 
-## Deepseek API接口
+### 配置AI分析功能
+1. 安装必要的依赖：
+```bash
+pip install openai
+```
 
-sk-395d444899dd4c6da3f049ab30e10db2
+2. 配置API密钥：
+- 复制配置模板文件：
+  ```bash
+  cp balceapp/config.py.example balceapp/config.py
+  ```
+- 编辑 `balceapp/config.py`，将 `your-api-key-here` 替换为你的 Deepseek API 密钥sk-395d444899dd4c6da3f049ab30e10db2
+
+3. 运行应用：
+```bash
+streamlit run balceapp/index.py
+```
+
+## Deepseek API接口
 
 `# Please install OpenAI SDK first: `pip install openai`
 

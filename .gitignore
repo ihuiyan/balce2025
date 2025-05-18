@@ -162,3 +162,4 @@ cython_debug/
 #.idea/
 
 balce/_version.py
+balceapp/config.py
