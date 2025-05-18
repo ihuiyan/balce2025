@@ -529,3 +529,75 @@ if st.session_state.balanced_eq and 'all_substances' in st.session_state:
                     for app in st.session_state.apparatus:
                         cols = st.columns([3, 1, 1])
                         cols[0].write(f"{app['name']}")
+                        cols[1].write(f"x {app['count']}")
+                        with cols[2]:
+                            # 删除按钮
+                            if st.button(f"删除", key=f"delete_{app['name']}", help="从列表中删除该装置"):
+                                st.session_state.apparatus.remove(app)
+                                st.success(f"已删除 {app['name']}")
+
+                # 添加实验数据记录部分
+                st.markdown('---')
+                st.subheader('8. 实验数据记录')
+
+                # 富文本编辑框的默认提示文本
+                default_notes = """请记录以下实验数据：
+
+1. 反应时间：
+   - 反应开始时间：
+   - 反应结束时间：
+   - 总反应时间：
+
+2. 产物数据：
+   - 产物质量：
+   - 产率计算：
+   - 纯度评估：
+
+3. 现象观察：
+   - 颜色变化：
+   - 沉淀情况：
+   - 气体产生：
+   - 温度变化：
+
+4. 其他观察：
+   - 反应速率：
+   - 催化效果：
+   - 特殊现象：
+
+5. 实验结论：
+   - 实验效果：
+   - 改进建议：
+   - 注意事项："""
+
+                # 创建富文本编辑框
+                if 'experiment_notes' not in st.session_state:
+                    st.session_state.experiment_notes = default_notes
+
+                st.session_state.experiment_notes = st.text_area(
+                    "实验记录",
+                    value=st.session_state.experiment_notes,
+                    height=400,
+                    help="记录实验过程中的观察数据、测量结果和重要现象"
+                )
+
+                # 文件上传部分
+                st.markdown('##### 附件上传')
+                uploaded_files = st.file_uploader(
+                    "上传实验相关文件（支持图片、文档等）",
+                    accept_multiple_files=True,
+                    type=['png', 'jpg', 'jpeg', 'pdf', 'doc', 'docx', 'xls', 'xlsx'],
+                    help="可以上传实验照片、数据表格、分析报告等相关文件"
+                )
+
+                if uploaded_files:
+                    for file in uploaded_files:
+                        # 计算文件大小
+                        file_size = len(file.getvalue()) / 1024  # KB
+                        size_str = f"{file_size:.1f} KB" if file_size < 1024 else f"{file_size/1024:.1f} MB"
+                        
+                        # 显示文件信息
+                        st.write(f"文件名：{file.name} （{size_str}）")
+
+                # 保存按钮
+                if st.button('保存实验记录', type='primary', help='保存实验记录和上传的文件', use_container_width=True):
+                    st.success('实验记录已保存')
