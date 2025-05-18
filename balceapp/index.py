@@ -264,15 +264,9 @@ if st.session_state.balanced_eq and 'all_substances' in st.session_state:
             min_value=0.0,
             value=st.session_state.known_amount,
             key='known_amount_input'
-        )
-
-        # 显示计算结果区域
+        )        # 显示计算按钮和结果区域
         st.markdown('#### 4.2 计算结果')
         
-        # 如果已有计算结果，显示它
-        if st.session_state.calculation_result is not None:
-            st.table(st.session_state.calculation_result)
-            
         # 计算按钮
         if st.button('计算', key='calculate_button'):
             try:
@@ -325,23 +319,24 @@ if st.session_state.balanced_eq and 'all_substances' in st.session_state:
                             '物质的量 (摩尔)': f'{mol_value:.2f}',
                             '摩尔质量 (g/mol)': f'{substance_molar_mass:.2f}',
                             '总质量 (g)': f'{total_mass:.2f}'
-                        })
-                    except Exception as e:
-                        table_data.append({
+                        })                    
+                    except Exception as e:                        table_data.append({
                             '物质': substance[2],
                             '物质的量 (摩尔)': '计算失败',
                             '摩尔质量 (g/mol)': '计算失败',
                             '总质量 (g)': f'错误: {str(e)}'
                         })
 
-                # 保存并显示结果
+                # 保存结果并显示
                 st.session_state.calculation_result = pd.DataFrame(table_data)
                 st.session_state.show_analysis_section = True
                 st.success('计算完成')
-                st.table(st.session_state.calculation_result)
-                
             except Exception as e:
                 st.error(f'计算错误：{str(e)}')
+                
+        # 显示最新的计算结果（无论是否刚刚计算）
+        if st.session_state.calculation_result is not None:
+            st.table(st.session_state.calculation_result)
 
     except Exception as e:
         st.error(f'初始化计算模块错误：{str(e)}')

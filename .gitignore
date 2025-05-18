@@ -1,8 +1,5 @@
 # Python
 
-# Log files
-log.txt
-
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -165,5 +162,3 @@ cython_debug/
 #.idea/
 
 balce/_version.py
-balceapp/config.py
->>>>>>> 0b39951ba7f863d94dca725c60c2bbf02e6ff13b
