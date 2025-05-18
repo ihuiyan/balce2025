@@ -78,7 +78,7 @@ True
 
 从 Git 安装：
 
-`pip install git+https://gitee.com/hibays/balce.git`
+`pip install git+https://gitee.com/leowhy/balce2025.git`
 
 # 使用
 

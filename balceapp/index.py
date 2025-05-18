@@ -22,8 +22,7 @@ if 'initialized' not in st.session_state:
     st.session_state.calculation_result = None
     st.session_state.ai_analysis = None
     st.session_state.selected_substance_key = None
-    st.session_state.all_substances = None
-    # 反应条件
+    st.session_state.all_substances = None    # 反应条件
     st.session_state.conditions = {
         'temperature': 25.0,
         'pressure': 1.0,
@@ -32,6 +31,12 @@ if 'initialized' not in st.session_state:
         'lighting': False,
         'acid_base': '无'
     }
+    # 实验装置
+    st.session_state.apparatus = []
+    st.session_state.available_apparatus = [
+        '密闭容器', '试管', '烧杯', '反应釜', '加热器', '冷凝器',
+        '气体收集装置', '通风橱', '恒温水浴', '温度计', '压力计', '抽气装置'
+    ]
 
 # 设置页面配置
 st.set_page_config(
@@ -182,7 +187,7 @@ if st.session_state.balanced_eq:
                 coef, molecule = match.groups()
                 if not molecule:
                     continue
-                    
+                
                 # 处理系数
                 coef = coef if coef else '1'
                 
@@ -320,7 +325,8 @@ if st.session_state.balanced_eq and 'all_substances' in st.session_state:
                             '摩尔质量 (g/mol)': f'{substance_molar_mass:.2f}',
                             '总质量 (g)': f'{total_mass:.2f}'
                         })                    
-                    except Exception as e:                        table_data.append({
+                    except Exception as e:
+                        table_data.append({
                             '物质': substance[2],
                             '物质的量 (摩尔)': '计算失败',
                             '摩尔质量 (g/mol)': '计算失败',
@@ -345,41 +351,20 @@ if st.session_state.balanced_eq and 'all_substances' in st.session_state:
     if hasattr(st.session_state, 'show_analysis_section') and st.session_state.show_analysis_section:
         # AI分析部分
         st.markdown('---')
-        st.subheader('5. AI反应分析')
+        st.subheader('5. 方程式反应分析')
         
         # 初始化分析状态
         if 'analyzing' not in st.session_state:
             st.session_state.analyzing = False
         if 'analysis_completed' not in st.session_state:
-            st.session_state.analysis_completed = False
-
-        # 显示AI分析结果区域
-        st.markdown('#### 5.1 反应分析')
+            st.session_state.analysis_completed = False        # 显示AI分析结果区域
 
         # 如果正在分析，显示进度状态
         if st.session_state.analyzing:
             with st.spinner('正在分析中...'):
-                # 准备反应条件
-                conditions = []
-                if st.session_state.conditions['temperature'] != 25.0:
-                    conditions.append(f"温度: {st.session_state.conditions['temperature']}℃")
-                if st.session_state.conditions['pressure'] != 1.0:
-                    conditions.append(f"压力: {st.session_state.conditions['pressure']}atm")
-                if st.session_state.conditions['catalyst']:
-                    conditions.append(f"催化剂: {st.session_state.conditions['catalyst']}")
-                if st.session_state.conditions['heating']:
-                    conditions.append("需要加热")
-                if st.session_state.conditions['lighting']:
-                    conditions.append("需要光照")
-                if st.session_state.conditions['acid_base'] != '无':
-                    conditions.append(f"需要{st.session_state.conditions['acid_base']}条件")
-                
-                conditions_str = '，'.join(conditions) if conditions else '标准状态'
-                
                 try:
                     prompt = f"""请分析以下化学反应：
 方程式：{str(st.session_state.balanced_eq)}
-反应条件：{conditions_str}
 
 请从以下几个方面进行专业的分析：
 1. 反应类型（氧化还原/酸碱/沉淀/复分解等）
@@ -391,7 +376,7 @@ if st.session_state.balanced_eq and 'all_substances' in st.session_state:
 7. 记录和分析建议
 8. 经济和环保评估（工业生产）
 
-请用专业且简洁的语言回答，重点突出关键信息。"""
+请用专业且简洁的语言回答，重点突出关键信息并注意输出的格式规范。"""
                     
                     response = client.chat.completions.create(
                         model="deepseek-chat",
@@ -430,7 +415,7 @@ if st.session_state.balanced_eq and 'all_substances' in st.session_state:
 
         # 如果分析完成，显示结果
         if st.session_state.ai_analysis:
-            st.markdown('#### 5.2 分析结果')
+            st.markdown('#### 分析结果')
             st.markdown(st.session_state.ai_analysis)
 
             # 只有在分析完成后才显示反应条件部分
@@ -504,3 +489,59 @@ if st.session_state.balanced_eq and 'all_substances' in st.session_state:
                 
                 if conditions:
                     st.info('反应条件：' + '，'.join(conditions))
+
+                # 添加实验装置选择部分
+                st.markdown('---')
+                st.subheader('7. 实验装置选择')
+
+                # 创建两列布局
+                col_select, col_count = st.columns([3, 1])
+
+                with col_select:
+                    # 装置选择下拉框
+                    selected_apparatus = st.selectbox(
+                        '选择实验装置',
+                        options=st.session_state.available_apparatus,
+                        help='选择需要的实验装置'
+                    )
+
+                with col_count:
+                    # 数量输入框
+                    apparatus_count = st.number_input(
+                        '数量',
+                        min_value=1,
+                        value=1,
+                        help='输入所需装置的数量'
+                    )                # 添加到列表按钮
+                if st.button('添加到装置列表', help='将选择的装置添加到列表中', use_container_width=True):
+                    if selected_apparatus:
+                        new_apparatus = {'name': selected_apparatus, 'count': apparatus_count}
+                        # 检查是否已存在相同装置
+                        exists = False
+                        for i, app in enumerate(st.session_state.apparatus):
+                            if app['name'] == selected_apparatus:
+                                # 更新现有装置的数量
+                                st.session_state.apparatus[i]['count'] += apparatus_count
+                                exists = True
+                                break
+                        if not exists:
+                            # 添加新装置
+                            st.session_state.apparatus.append(new_apparatus)
+                        st.success(f'已添加 {apparatus_count} 个 {selected_apparatus}')
+
+                # 显示已选择的装置列表
+                if st.session_state.apparatus:
+                    st.markdown('##### 已选择的实验装置：')
+                    for app in st.session_state.apparatus:
+                        cols = st.columns([3, 1, 1])
+                        cols[0].write(f"{app['name']}")
+                        cols[1].write(f"数量：{app['count']}")
+                        if cols[2].button('删除', key=f"del_{app['name']}"):
+                            st.session_state.apparatus.remove(app)
+                            st.rerun()                # 完成按钮
+                if st.button('完成', help='确认所有已选择的实验装置', use_container_width=True):
+                    if st.session_state.apparatus:
+                        apparatus_str = '、'.join([f"{app['name']} {app['count']}个" for app in st.session_state.apparatus])
+                        st.success(f'已确认实验装置：{apparatus_str}')
+                    else:
+                        st.warning('尚未选择任何实验装置')
