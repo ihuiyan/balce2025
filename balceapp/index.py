@@ -349,7 +349,8 @@ if st.session_state.balanced_eq and 'all_substances' in st.session_state:
 
     # 只有在计算后才显示AI分析部分
     if hasattr(st.session_state, 'show_analysis_section') and st.session_state.show_analysis_section:
-        # AI分析部分          st.markdown('---')
+        # AI分析部分        
+        st.markdown('---')
         st.subheader('5. 方程式反应分析')
         
         @st.cache_resource(show_spinner=False)
@@ -381,32 +382,27 @@ if st.session_state.balanced_eq and 'all_substances' in st.session_state:
             )
             return response.choices[0].message.content
 
-        # 初始化分析状态
-        if 'analysis_completed' not in st.session_state:
-            st.session_state.analysis_completed = False
-
         # 创建一个容器来显示结果
         result_container = st.container()
-
+        
         # AI分析按钮和结果显示
-        with st.container():
-            if st.button('AI建议', help='使用AI分析当前反应的类型、条件和机理', key='ai_analysis_button', use_container_width=True):
-                if not st.session_state.balanced_eq:
-                    st.warning("请先输入并平衡化学方程式")
-                elif not DEEPSEEK_API_KEY or DEEPSEEK_API_KEY == "your-api-key-here":
-                    st.error("请先配置 Deepseek API 密钥。参考 README.md 中的配置说明。")
-                else:
-                    try:
-                        with st.spinner('正在分析中...'):
-                            analysis_result = get_ai_analysis(str(st.session_state.balanced_eq))
-                            st.session_state.ai_analysis = analysis_result
-                            st.session_state.analysis_completed = True
-                    except Exception as e:
-                        error_msg = str(e).lower()
-                        if "api_key" in error_msg or "unauthorized" in error_msg:
-                            st.error("API密钥无效或未正确配置。请检查配置文件或环境变量中的API密钥。")
-                        else:
-                            st.error(f"AI分析出错：{str(e)}")
+        if st.button('AI建议', help='使用AI分析当前反应的类型、条件和机理', key='ai_analysis_button', use_container_width=True):
+            if not st.session_state.balanced_eq:
+                st.warning("请先输入并平衡化学方程式")
+            elif not DEEPSEEK_API_KEY or DEEPSEEK_API_KEY == "your-api-key-here":
+                st.error("请先配置 Deepseek API 密钥。参考 README.md 中的配置说明。")
+            else:
+                try:
+                    with st.spinner('正在分析中...'):
+                        analysis_result = get_ai_analysis(str(st.session_state.balanced_eq))
+                        st.session_state.ai_analysis = analysis_result
+                        st.session_state.analysis_completed = True
+                except Exception as e:
+                    error_msg = str(e).lower()
+                    if "api_key" in error_msg or "unauthorized" in error_msg:
+                        st.error("API密钥无效或未正确配置。请检查配置文件或环境变量中的API密钥。")
+                    else:
+                        st.error(f"AI分析出错：{str(e)}")
 
         # 如果存在分析结果，显示在结果容器中
         if st.session_state.get('ai_analysis') and st.session_state.analysis_completed:
@@ -533,15 +529,3 @@ if st.session_state.balanced_eq and 'all_substances' in st.session_state:
                     for app in st.session_state.apparatus:
                         cols = st.columns([3, 1, 1])
                         cols[0].write(f"{app['name']}")
-                        cols[1].write(f"数量：{app['count']}")
-                        if cols[2].button('删除', key=f"del_{app['name']}"):
-                            st.session_state.apparatus.remove(app)
-                            st.rerun()
-                
-                # 完成按钮，使用绿色样式
-                if st.button('完成', help='确认所有已选择的实验装置', use_container_width=True, type='primary'):
-                    if st.session_state.apparatus:
-                        apparatus_str = '、'.join([f"{app['name']} {app['count']}个" for app in st.session_state.apparatus])
-                        st.success(f'已确认实验装置：{apparatus_str}')
-                    else:
-                        st.warning('尚未选择任何实验装置')
