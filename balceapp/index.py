@@ -12,18 +12,64 @@ sys.path.append(os.path.abspath('.'))
 from chem_names_zh import chem_names_zh
 from balceapp.config import DEEPSEEK_API_KEY, DEEPSEEK_BASE_URL
 
-# 初始化Deepseek客户端
-client = OpenAI(api_key=DEEPSEEK_API_KEY, base_url=DEEPSEEK_BASE_URL)
+# 初始化必要的状态变量
+if 'initialized' not in st.session_state:
+    st.session_state.initialized = True
+    # 基本状态
+    st.session_state.balanced_eq = None
+    st.session_state.known_amount = 1.0
+    st.session_state.show_analysis_section = False
+    st.session_state.calculation_result = None
+    st.session_state.ai_analysis = None
+    st.session_state.selected_substance_key = None
+    st.session_state.all_substances = None
+    # 反应条件
+    st.session_state.conditions = {
+        'temperature': 25.0,
+        'pressure': 1.0,
+        'catalyst': '',
+        'heating': False,
+        'lighting': False,
+        'acid_base': '无'
+    }
 
-# 创建单位注册表
+# 设置页面配置
+st.set_page_config(
+    page_title="化学方程式平衡器",
+    page_icon="⚗️",
+    layout="wide"
+)
+
+# 自定义页面样式
+st.markdown("""
+<style>
+.stApp title {
+    font-size: 42px !important;
+    font-weight: bold !important;
+    color: #2c3e50 !important;
+    text-align: center !important;
+    margin-bottom: 2rem !important;
+}
+.stButton > button {
+    width: 100%;
+}
+.stTable {
+    margin-top: 1rem;
+}
+.css-1v3fvcr {
+    padding-top: 0;
+}
+.stMarkdown {
+    margin-top: 0.5rem;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# 初始化客户端
+client = OpenAI(api_key=DEEPSEEK_API_KEY, base_url=DEEPSEEK_BASE_URL)
 ureg = UnitRegistry()
 
-# 初始化session_state
-if 'balanced_eq' not in st.session_state:
-    st.session_state.balanced_eq = None
-if 'known_amount' not in st.session_state:
-    st.session_state.known_amount = 1.0
-
+# 页面标题
 st.title('化学方程式平衡器')
 st.subheader('1. 输入化学方程式')
 
@@ -180,23 +226,21 @@ if st.session_state.balanced_eq and 'all_substances' in st.session_state:
     st.subheader('4. 计算物质的量')
 
     try:
-        # 创建CQuestion对象（在每次rerun时都需要创建，因为其状态不保存在session_state）
+        # 创建CQuestion对象
         question = balce.CQuestion(str(st.session_state.balanced_eq))
-
-        # 从session_state获取物质列表
         all_substances = st.session_state.all_substances
 
-        st.markdown('#### 3.1 输入已知物质的量')
-        st.markdown('##### 3.1.1 物质列表:')
-        # Simplified dropdown options, just show substance name
+        # 显示输入区域
+        st.markdown('#### 4.1 输入已知物质的量')
+        st.markdown('##### 4.1.1 物质列表:')
+        
+        # 准备物质选择下拉框
         substance_options = {sub: i for i, sub in enumerate(all_substances)}
-        # 检查当前选择的物质是否还在列表中，防止因列表变化导致索引错误
-        current_selected_substance = list(substance_options.keys())[0] if len(substance_options) > 0 else None
+        current_selected_substance = list(substance_options.keys())[0] if substance_options else None
         if 'selected_substance_key' in st.session_state and st.session_state.selected_substance_key in substance_options:
             current_selected_substance = st.session_state.selected_substance_key
 
-        # 下拉框显示物质名和中文名称（substance[2] + 中文名称）
-        # 转换物质为 ASCII 格式以匹配中文名称
+        # 准备显示选项
         display_names = []
         for sub in substance_options.keys():
             formula_ascii = unicode_subscript_to_ascii(sub[2])
@@ -204,144 +248,141 @@ if st.session_state.balanced_eq and 'all_substances' in st.session_state:
             display_names.append((sub[2], zh_name))
         display_labels = [f"{formula} [{zh_name}]" for formula, zh_name in display_names]
         
+        # 设置当前选择的物质
+        selected_idx = 0
         if current_selected_substance:
-            current_formula_ascii = unicode_subscript_to_ascii(current_selected_substance[2])
             selected_idx = [pair[0] for pair in display_names].index(current_selected_substance[2])
-        else:
-            selected_idx = 0
             
         selected_display = st.selectbox('选择已知物质', display_labels, index=selected_idx)
-        # 从显示标签中提取化学式
         selected_formula = selected_display.split(' [')[0]
-        # 反查元组
         selected_substance = [k for k in substance_options.keys() if k[2] == selected_formula][0]
         st.session_state.selected_substance_key = selected_substance
 
-        st.session_state.known_amount = st.number_input('输入物质的量(摩尔)',
-                                                          min_value=0.0,
-                                                          value=st.session_state.known_amount, key='known_amount_input') # 添加key避免冲突
+        # 输入物质的量
+        st.session_state.known_amount = st.number_input(
+            '输入物质的量(摩尔)',
+            min_value=0.0,
+            value=st.session_state.known_amount,
+            key='known_amount_input'
+        )
 
-        st.markdown('#### 3.2 计算结果')
-        if st.button('计算', key='calculate_button'): # 添加key避免冲突
-                try:
-                    # Reuse the same list of substances
-                    actual_substances = all_substances
-
-                    if selected_idx >= len(actual_substances):
-                         # This should ideally not happen if all_substances is correct
-                        raise ValueError(f"选择的物质索引 {selected_idx} 超出范围 (列表长度 {len(actual_substances)})")
-
-                    # 获取物质的摩尔质量
-                    molar_mass = None
-                    try:
-                        formula = balce.formatEle(selected_substance[2], form=CStyle.ascii)
-                        formula = re.sub(r'^\d+', '', formula)
-                        # print('用于摩尔质量的 formula:', formula)
-                        with open('log.txt', 'a', encoding='utf-8') as f:
-                            f.write(f"用于摩尔质量的 formula: {formula}\n")
-                        # 手动解析 formula 并查表计算摩尔质量
-                        element_pattern = r'([A-Z][a-z]?)(\d*)'
-                        molar_mass = 0.0
-                        for elem, count in re.findall(element_pattern, formula):
-                            if elem not in elesdata:
-                                raise ValueError(f'未知元素: {elem}')
-                            n = int(count) if count else 1
-                            molar_mass += elesdata[elem]['weight'] * n
-                    except Exception as e:
-                        st.error(f'无法获取 {selected_substance[2]} 的摩尔质量: {e}')
-                        raise RuntimeError(f'无法获取 {selected_substance[2]} 的摩尔质量: {e}')
-                    # 先将摩尔数转为质量（g）
-                    known_mass = st.session_state.known_amount * molar_mass * ureg.gram
-                    question[(selected_substance[0], selected_substance[1])] = known_mass
-
-                    # Calculate other substances
-                    question.solve()
-
-                    # Display results
-                    st.markdown('##### 3.2.1 所有物质的量:')
-                    # 用表格展示所有物质的量
-                    table_data = []
-                    # 先处理所有物质，已知物质优先
-                    for substance in actual_substances:
-                        try:
-                            formula = balce.formatEle(substance[2], form=CStyle.ascii)
-                            formula = re.sub(r'^\d+', '', formula)
-                            with open('log.txt', 'a', encoding='utf-8') as f:
-                                f.write(f"用于摩尔质量的 formula: {formula}\n")
-                            element_pattern = r'([A-Z][a-z]?)(\d*)'
-                            molar_mass = 0.0
-                            for elem, count in re.findall(element_pattern, formula):
-                                if elem not in elesdata:
-                                    raise ValueError(f'未知元素: {elem}')
-                                n = int(count) if count else 1
-                                molar_mass += elesdata[elem]['weight'] * n
-                            if substance == selected_substance:
-                                mol_value = st.session_state.known_amount
-                            else:
-                                amount = question[(substance[0], substance[1])]
-                                if hasattr(amount, 'magnitude'):
-                                    mol_value = amount.magnitude / molar_mass
-                                else:
-                                    mol_value = amount / molar_mass
-                            total_mass = mol_value * molar_mass
-                            # 获取物质的中文名称
-                            substance_ascii = unicode_subscript_to_ascii(substance[2])
-                            zh_name = chem_names_zh.get(substance_ascii, substance_ascii)
-                            table_data.append({
-                                '物质': f"{substance[2]} [{zh_name}]",
-                                '物质的量 (摩尔)': f'{mol_value:.2f}',
-                                '摩尔质量 (g/mol)': f'{molar_mass:.2f}',
-                                '总质量 (g)': f'{total_mass:.2f}'
-                            })
-                        except Exception as e:
-                            table_data.append({
-                                '物质': substance[2],
-                                '物质的量 (摩尔)': '计算失败',
-                                '摩尔质量 (g/mol)': '计算失败',
-                                '总质量 (g)': f'错误: {str(e)}'
-                            })
-                    df = pd.DataFrame(table_data)
-                    st.table(df)
-
-                except Exception as e:
-                    st.error(f'计算错误：{e}')
-    except Exception as e:
-        st.error(f'初始化计算模块错误：{e}') # Catch potential errors during CQuestion creation or splitCE()
-
-    # 在计算完成后添加反应条件变量定义
-    conditions = []
-    temperature = 25.0
-    pressure = 1.0
-    catalyst = ""
-    heating = False
-    lighting = False
-    acid_base = "无"
-
-    # AI分析部分
-    st.markdown('---')
-    st.subheader('5. AI反应分析')
-    
-    # AI分析按钮和状态
-    col1, col2 = st.columns([2, 10])
-    with col1:
-        show_analysis = st.button('AI建议', help='使用AI分析当前反应的类型、条件和机理')
+        # 显示计算结果区域
+        st.markdown('#### 4.2 计算结果')
         
-    # 如果点击了按钮
-    if show_analysis:
-        if not st.session_state.balanced_eq:
-            with col2:
-                st.warning("请先输入并平衡化学方程式")
-        elif not DEEPSEEK_API_KEY or DEEPSEEK_API_KEY == "your-api-key-here":
-            with col2:
-                st.error("请先配置 Deepseek API 密钥。参考 README-zh-CN.md 中的配置说明。")
-        else:
+        # 如果已有计算结果，显示它
+        if st.session_state.calculation_result is not None:
+            st.table(st.session_state.calculation_result)
+            
+        # 计算按钮
+        if st.button('计算', key='calculate_button'):
             try:
-                # 在按钮旁边显示加载状态
-                with col2:
-                    with st.spinner('AI正在思考中...'):
-                        # 准备提示信息
-                        conditions_str = '标准状态'
-                        prompt = f"""请分析以下化学反应：
+                # 获取物质的摩尔质量
+                formula = balce.formatEle(selected_substance[2], form=CStyle.ascii)
+                formula = re.sub(r'^\d+', '', formula)
+                element_pattern = r'([A-Z][a-z]?)(\d*)'
+                molar_mass = 0.0
+                
+                for elem, count in re.findall(element_pattern, formula):
+                    if elem not in elesdata:
+                        raise ValueError(f'未知元素: {elem}')
+                    n = int(count) if count else 1
+                    molar_mass += elesdata[elem]['weight'] * n
+
+                # 计算已知物质的质量
+                known_mass = st.session_state.known_amount * molar_mass * ureg.gram
+                question[(selected_substance[0], selected_substance[1])] = known_mass
+
+                # 计算其他物质
+                question.solve()
+
+                # 准备表格数据
+                table_data = []
+                for substance in all_substances:
+                    try:
+                        formula = balce.formatEle(substance[2], form=CStyle.ascii)
+                        formula = re.sub(r'^\d+', '', formula)
+                        element_pattern = r'([A-Z][a-z]?)(\d*)'
+                        substance_molar_mass = sum(
+                            elesdata[elem]['weight'] * (int(count) if count else 1)
+                            for elem, count in re.findall(element_pattern, formula)
+                        )
+                        
+                        # 计算物质的量和总质量
+                        if substance == selected_substance:
+                            mol_value = st.session_state.known_amount
+                        else:
+                            amount = question[(substance[0], substance[1])]
+                            mol_value = amount.magnitude / substance_molar_mass if hasattr(amount, 'magnitude') else amount / substance_molar_mass
+                        
+                        total_mass = mol_value * substance_molar_mass
+                        
+                        # 获取中文名称
+                        substance_ascii = unicode_subscript_to_ascii(substance[2])
+                        zh_name = chem_names_zh.get(substance_ascii, substance_ascii)
+                        
+                        table_data.append({
+                            '物质': f"{substance[2]} [{zh_name}]",
+                            '物质的量 (摩尔)': f'{mol_value:.2f}',
+                            '摩尔质量 (g/mol)': f'{substance_molar_mass:.2f}',
+                            '总质量 (g)': f'{total_mass:.2f}'
+                        })
+                    except Exception as e:
+                        table_data.append({
+                            '物质': substance[2],
+                            '物质的量 (摩尔)': '计算失败',
+                            '摩尔质量 (g/mol)': '计算失败',
+                            '总质量 (g)': f'错误: {str(e)}'
+                        })
+
+                # 保存并显示结果
+                st.session_state.calculation_result = pd.DataFrame(table_data)
+                st.session_state.show_analysis_section = True
+                st.success('计算完成')
+                st.table(st.session_state.calculation_result)
+                
+            except Exception as e:
+                st.error(f'计算错误：{str(e)}')
+
+    except Exception as e:
+        st.error(f'初始化计算模块错误：{str(e)}')
+
+    # 只有在计算后才显示AI分析部分
+    if hasattr(st.session_state, 'show_analysis_section') and st.session_state.show_analysis_section:
+        # AI分析部分
+        st.markdown('---')
+        st.subheader('5. AI反应分析')
+        
+        # 初始化分析状态
+        if 'analyzing' not in st.session_state:
+            st.session_state.analyzing = False
+        if 'analysis_completed' not in st.session_state:
+            st.session_state.analysis_completed = False
+
+        # 显示AI分析结果区域
+        st.markdown('#### 5.1 反应分析')
+
+        # 如果正在分析，显示进度状态
+        if st.session_state.analyzing:
+            with st.spinner('正在分析中...'):
+                # 准备反应条件
+                conditions = []
+                if st.session_state.conditions['temperature'] != 25.0:
+                    conditions.append(f"温度: {st.session_state.conditions['temperature']}℃")
+                if st.session_state.conditions['pressure'] != 1.0:
+                    conditions.append(f"压力: {st.session_state.conditions['pressure']}atm")
+                if st.session_state.conditions['catalyst']:
+                    conditions.append(f"催化剂: {st.session_state.conditions['catalyst']}")
+                if st.session_state.conditions['heating']:
+                    conditions.append("需要加热")
+                if st.session_state.conditions['lighting']:
+                    conditions.append("需要光照")
+                if st.session_state.conditions['acid_base'] != '无':
+                    conditions.append(f"需要{st.session_state.conditions['acid_base']}条件")
+                
+                conditions_str = '，'.join(conditions) if conditions else '标准状态'
+                
+                try:
+                    prompt = f"""请分析以下化学反应：
 方程式：{str(st.session_state.balanced_eq)}
 反应条件：{conditions_str}
 
@@ -351,106 +392,120 @@ if st.session_state.balanced_eq and 'all_substances' in st.session_state:
 3. 反应机理简述
 4. 实验操作建议
 5. 实验装置准备
-例如：如果是气体反应，可能需要密闭容器或气体收集装置。
-如果是液体反应，可能需要烧杯、试管或反应釜。
-如果是高温反应，可能需要加热设备。
 6. 安全准备
-例如：
-是否需要佩戴防护装备（如手套、护目镜、实验室外套）？
-是否需要在通风橱中进行操作？
-是否需要准备灭火器或其他应急设备？
 7. 记录和分析建议
-准备好记录实验数据的工具（如笔记本、数据表格等）。
-如果是实验，需要明确观察和测量的指标（如反应时间、产物的量、颜色变化等）。
-如果是工业生产，可能需要建立质量控制标准。
 8. 经济和环保评估（工业生产）
-如果是工业生产，需要考虑反应的经济性和环保性。
-例如：
-反应物和生成物的成本如何？
-是否会产生有害废物？如何处理？
-是否有更高效或更环保的替代方案？
 
 请用专业且简洁的语言回答，重点突出关键信息。"""
-                        
-                        # 调用Deepseek API
-                        response = client.chat.completions.create(
-                            model="deepseek-chat",
-                            messages=[
-                                {"role": "system", "content": "你是一位专业的化学分析专家，擅长分析化学反应机理和实验条件。请用简洁专业的语言回答。"},
-                                {"role": "user", "content": prompt}
-                            ],
-                            temperature=0.7,
-                            stream=False
-                        )
-                        
-                        # 显示分析结果
-                        analysis = response.choices[0].message.content
-                        st.success("分析完成")
-                
-                # 在按钮下方全宽度显示分析结果
-                st.markdown(analysis)
-            
-            except Exception as e:
-                with col2:
+                    
+                    response = client.chat.completions.create(
+                        model="deepseek-chat",
+                        messages=[
+                            {"role": "system", "content": "你是一位专业的化学分析专家，擅长分析化学反应机理和实验条件。请用简洁专业的语言回答。"},
+                            {"role": "user", "content": prompt}
+                        ],
+                        temperature=0.7,
+                        stream=False
+                    )
+                    
+                    # 保存分析结果
+                    st.session_state.ai_analysis = response.choices[0].message.content
+                    st.session_state.analysis_completed = True
+                    st.success('分析完成')
+                    
+                except Exception as e:
                     error_msg = str(e).lower()
                     if "api_key" in error_msg or "unauthorized" in error_msg:
                         st.error("API密钥无效或未正确配置。请检查配置文件或环境变量中的API密钥。")
                     else:
                         st.error(f"AI分析出错：{str(e)}")
+                finally:
+                    st.session_state.analyzing = False
+                    st.rerun()
+        else:
+            # 如果未开始分析或分析完成，显示正常按钮
+            if st.button('AI建议', help='使用AI分析当前反应的类型、条件和机理', key='ai_analysis_button', use_container_width=True):
+                if not st.session_state.balanced_eq:
+                    st.warning("请先输入并平衡化学方程式")
+                elif not DEEPSEEK_API_KEY or DEEPSEEK_API_KEY == "your-api-key-here":
+                    st.error("请先配置 Deepseek API 密钥。参考 README-zh-CN.md 中的配置说明。")
+                else:
+                    st.session_state.analyzing = True
+                    st.rerun()
 
-    # 反应条件部分
-    st.markdown('---')
-    st.subheader('6. 反应条件')
-    
-    # 使用列来排版
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        temperature = st.number_input('温度 (℃)', 
-            min_value=-273.15, 
-            value=temperature,
-            help='输入反应的温度，单位为摄氏度')
-            
-    with col2:
-        pressure = st.number_input('压力 (atm)',
-            min_value=0.0,
-            value=pressure,
-            help='输入反应的压力，单位为标准大气压')
-            
-    with col3:
-        catalyst = st.text_input('催化剂',
-            value=catalyst,
-            placeholder='例如：MnO₂、Fe³⁺等',
-            help='输入反应所需的催化剂')
+        # 如果分析完成，显示结果
+        if st.session_state.ai_analysis:
+            st.markdown('#### 5.2 分析结果')
+            st.markdown(st.session_state.ai_analysis)
 
-    # 添加其他条件的多选框
-    st.markdown('##### 其他条件：')
-    cols = st.columns(3)
-    with cols[0]:
-        heating = st.checkbox('加热', value=heating, help='反应需要加热')
-    with cols[1]:
-        lighting = st.checkbox('光照', value=lighting, help='反应需要光照')
-    with cols[2]:
-        acid_base = st.selectbox('酸碱条件',
-            ['无', '酸性', '碱性'],
-            index=['无', '酸性', '碱性'].index(acid_base),
-            help='选择反应的酸碱条件')
+            # 只有在分析完成后才显示反应条件部分
+            if st.session_state.analysis_completed:
+                st.markdown('---')
+                st.subheader('6. 反应条件')
+                
+                col1, col2, col3 = st.columns(3)
+                
+                with col1:
+                    st.session_state.conditions['temperature'] = st.number_input(
+                        '温度 (℃)', 
+                        min_value=-273.15, 
+                        value=st.session_state.conditions['temperature'],
+                        help='输入反应的温度，单位为摄氏度'
+                    )
+                    
+                with col2:
+                    st.session_state.conditions['pressure'] = st.number_input(
+                        '压力 (atm)',
+                        min_value=0.0,
+                        value=st.session_state.conditions['pressure'],
+                        help='输入反应的压力，单位为标准大气压'
+                    )
+                    
+                with col3:
+                    st.session_state.conditions['catalyst'] = st.text_input(
+                        '催化剂',
+                        value=st.session_state.conditions['catalyst'],
+                        placeholder='例如：MnO₂、Fe³⁺等',
+                        help='输入反应所需的催化剂'
+                    )
 
-    # 显示反应条件总结
-    conditions = []
-    if temperature != 25.0:
-        conditions.append(f'温度: {temperature}℃')
-    if pressure != 1.0:
-        conditions.append(f'压力: {pressure}atm')
-    if catalyst:
-        conditions.append(f'催化剂: {catalyst}')
-    if heating:
-        conditions.append('需要加热')
-    if lighting:
-        conditions.append('需要光照')
-    if acid_base != '无':
-        conditions.append(f'需要{acid_base}条件')
-    
-    # 显示反应条件
-    if conditions:
-        st.info('反应条件：' + '，'.join(conditions))
+                # 其他条件
+                st.markdown('##### 其他条件：')
+                cols = st.columns(3)
+                with cols[0]:
+                    st.session_state.conditions['heating'] = st.checkbox(
+                        '加热',
+                        value=st.session_state.conditions['heating'],
+                        help='反应需要加热'
+                    )
+                with cols[1]:
+                    st.session_state.conditions['lighting'] = st.checkbox(
+                        '光照',
+                        value=st.session_state.conditions['lighting'],
+                        help='反应需要光照'
+                    )
+                with cols[2]:
+                    st.session_state.conditions['acid_base'] = st.selectbox(
+                        '酸碱条件',
+                        ['无', '酸性', '碱性'],
+                        index=['无', '酸性', '碱性'].index(st.session_state.conditions['acid_base']),
+                        help='选择反应的酸碱条件'
+                    )
+
+                # 显示当前反应条件总结
+                conditions = []
+                if st.session_state.conditions['temperature'] != 25.0:
+                    conditions.append(f"温度: {st.session_state.conditions['temperature']}℃")
+                if st.session_state.conditions['pressure'] != 1.0:
+                    conditions.append(f"压力: {st.session_state.conditions['pressure']}atm")
+                if st.session_state.conditions['catalyst']:
+                    conditions.append(f"催化剂: {st.session_state.conditions['catalyst']}")
+                if st.session_state.conditions['heating']:
+                    conditions.append('需要加热')
+                if st.session_state.conditions['lighting']:
+                    conditions.append('需要光照')
+                if st.session_state.conditions['acid_base'] != '无':
+                    conditions.append(f"需要{st.session_state.conditions['acid_base']}条件")
+                
+                if conditions:
+                    st.info('反应条件：' + '，'.join(conditions))

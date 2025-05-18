@@ -585,3 +585,52 @@ all_substances: [('left', 0, 'H₂'), ('left', 1, 'O₂'), ('right', 0, 'H₂O')
 用于摩尔质量的 formula: H2
 用于摩尔质量的 formula: O2
 用于摩尔质量的 formula: H2O
+left_substances: ['KMnO₄', 'HCl']
+right_substances: ['KCl', 'MnCl₂', 'H₂O', 'Cl₂']
+all_substances: [('left', 0, 'KMnO₄'), ('left', 1, 'HCl'), ('right', 0, 'KCl'), ('right', 1, 'MnCl₂'), ('right', 2, 'H₂O'), ('right', 3, 'Cl₂')]
+用于摩尔质量的 formula: KMnO4
+用于摩尔质量的 formula: KMnO4
+用于摩尔质量的 formula: HCl
+用于摩尔质量的 formula: KCl
+用于摩尔质量的 formula: MnCl2
+用于摩尔质量的 formula: H2O
+用于摩尔质量的 formula: Cl2
+left_substances: ['H₂', 'O₂']
+right_substances: ['H₂O']
+all_substances: [('left', 0, 'H₂'), ('left', 1, 'O₂'), ('right', 0, 'H₂O')]
+用于摩尔质量的 formula: H2O
+用于摩尔质量的 formula: H2
+用于摩尔质量的 formula: O2
+用于摩尔质量的 formula: H2O
+left_substances: ['H₂', 'O₂']
+right_substances: ['H₂O']
+all_substances: [('left', 0, 'H₂'), ('left', 1, 'O₂'), ('right', 0, 'H₂O')]
+用于摩尔质量的 formula: O2
+用于摩尔质量的 formula: H2
+用于摩尔质量的 formula: O2
+用于摩尔质量的 formula: H2O
+left_substances: ['H₂', 'O₂']
+right_substances: ['H₂O']
+all_substances: [('left', 0, 'H₂'), ('left', 1, 'O₂'), ('right', 0, 'H₂O')]
+left_substances: ['H₂', 'O₂']
+right_substances: ['H₂O']
+all_substances: [('left', 0, 'H₂'), ('left', 1, 'O₂'), ('right', 0, 'H₂O')]
+用于摩尔质量的 formula: H2O
+用于摩尔质量的 formula: H2
+用于摩尔质量的 formula: O2
+用于摩尔质量的 formula: H2O
+left_substances: ['KMnO₄', 'HCl']
+right_substances: ['KCl', 'MnCl₂', 'H₂O', 'Cl₂']
+all_substances: [('left', 0, 'KMnO₄'), ('left', 1, 'HCl'), ('right', 0, 'KCl'), ('right', 1, 'MnCl₂'), ('right', 2, 'H₂O'), ('right', 3, 'Cl₂')]
+left_substances: ['H₂', 'O₂']
+right_substances: ['H₂O']
+all_substances: [('left', 0, 'H₂'), ('left', 1, 'O₂'), ('right', 0, 'H₂O')]
+left_substances: ['H₂', 'O₂']
+right_substances: ['H₂O']
+all_substances: [('left', 0, 'H₂'), ('left', 1, 'O₂'), ('right', 0, 'H₂O')]
+left_substances: ['H₂', 'O₂']
+right_substances: ['H₂O']
+all_substances: [('left', 0, 'H₂'), ('left', 1, 'O₂'), ('right', 0, 'H₂O')]
+left_substances: ['H₂', 'O₂']
+right_substances: ['H₂O']
+all_substances: [('left', 0, 'H₂'), ('left', 1, 'O₂'), ('right', 0, 'H₂O')]
