@@ -591,8 +591,12 @@ if st.session_state.balanced_eq and 'all_substances' in st.session_state:
                     accept_multiple_files=True,
                     type=['png', 'jpg', 'jpeg', 'pdf', 'doc', 'docx', 'xls', 'xlsx'],
                     help="可以上传实验照片、数据表格、分析报告等相关文件"
-                )
-
+                )                # 初始化文件列表状态
+                if 'file_list' not in st.session_state:
+                    st.session_state.file_list = []
+                if 'last_upload_id' not in st.session_state:
+                    st.session_state.last_upload_id = 0
+                
                 if uploaded_files:
                     for file in uploaded_files:
                         # 计算文件大小
@@ -612,25 +616,40 @@ if st.session_state.balanced_eq and 'all_substances' in st.session_state:
                         st.write(f"文件名：{file.name} （{size_str}）")
                         st.success(f"文件已保存到：{os.path.basename(save_path)}")
                         
-                # 显示已上传的文件列表
+                    # 上传完成后，清空上传记录以准备下一次上传
+                    st.session_state.last_upload_id += 1
+                    uploaded_files.clear()
+                  # 更新文件列表（每次上传或删除后都会更新）
                 if os.path.exists(upload_dir):
-                    files = os.listdir(upload_dir)
-                    if files:
-                        st.markdown('##### 已上传的文件：')
-                        for filename in files:
+                    current_files = sorted(os.listdir(upload_dir))  # 按文件名排序
+                    if current_files != st.session_state.file_list or 'files_to_refresh' in st.session_state:
+                        st.session_state.file_list = current_files
+                        if 'files_to_refresh' in st.session_state:
+                            del st.session_state.files_to_refresh
+
+                # 显示已上传的文件列表
+                if st.session_state.file_list:
+                    st.markdown('##### 已上传的文件：')
+                    file_list_container = st.container()
+                    
+                    with file_list_container:
+                        for filename in st.session_state.file_list:
                             file_path = os.path.join(upload_dir, filename)
+                            if not os.path.exists(file_path):
+                                continue
+                                
                             file_size = os.path.getsize(file_path) / 1024  # KB
                             size_str = f"{file_size:.1f} KB" if file_size < 1024 else f"{file_size/1024:.1f} MB"
-                            col1, col2 = st.columns([3, 1])                            
+                            
+                            col1, col2 = st.columns([3, 1])
                             col1.write(f"{filename}")
-                            if col2.button("删除", key=f"del_file_{filename}"):
+                            if col2.button("删除", key=f"del_file_{filename}_{st.session_state.get('last_upload_id', 0)}"):
                                 try:
                                     os.remove(file_path)
-                                    files.remove(filename)  # 从列表中删除文件
-                                    if 'uploaded_files' in st.session_state:
-                                        st.session_state.pop('uploaded_files')  # 清除上传文件的缓存
+                                    st.session_state.files_to_refresh = True
+                                    st.session_state.file_list.remove(filename)
                                     st.success(f"文件 {filename} 已成功删除")
-                                    st.rerun()  # 使用 rerun 重新加载页面
+                                    st.rerun()
                                 except Exception as e:
                                     st.error(f"删除文件时出错：{str(e)}")
 
