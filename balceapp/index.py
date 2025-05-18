@@ -81,7 +81,7 @@ st.subheader('1. 输入化学方程式')
 # 化学方程式输入
 equation = st.text_input('1. 输入化学方程式，点击"平衡"按钮，即可得到平衡后的方程式', 'H2 + O2 = H2O')
 
-if st.button('1. 平衡'):
+if st.button('1. 平衡方程式'):
     try:
         eq = balce.CEquation(equation)
         eq.balance()
@@ -349,22 +349,14 @@ if st.session_state.balanced_eq and 'all_substances' in st.session_state:
 
     # 只有在计算后才显示AI分析部分
     if hasattr(st.session_state, 'show_analysis_section') and st.session_state.show_analysis_section:
-        # AI分析部分
-        st.markdown('---')
+        # AI分析部分          st.markdown('---')
         st.subheader('5. 方程式反应分析')
         
-        # 初始化分析状态
-        if 'analyzing' not in st.session_state:
-            st.session_state.analyzing = False
-        if 'analysis_completed' not in st.session_state:
-            st.session_state.analysis_completed = False        # 显示AI分析结果区域
-
-        # 如果正在分析，显示进度状态
-        if st.session_state.analyzing:
-            with st.spinner('正在分析中...'):
-                try:
-                    prompt = f"""请分析以下化学反应：
-方程式：{str(st.session_state.balanced_eq)}
+        @st.cache_resource(show_spinner=False)
+        def get_ai_analysis(balanced_eq):
+            """获取AI分析结果，使用缓存避免重复请求"""
+            prompt = f"""请分析以下化学反应：
+方程式：{balanced_eq}
 
 请从以下几个方面进行专业的分析：
 1. 反应类型（氧化还原/酸碱/沉淀/复分解等）
@@ -377,46 +369,51 @@ if st.session_state.balanced_eq and 'all_substances' in st.session_state:
 8. 经济和环保评估（工业生产）
 
 请用专业且简洁的语言回答，重点突出关键信息并注意输出的格式规范。"""
-                    
-                    response = client.chat.completions.create(
-                        model="deepseek-chat",
-                        messages=[
-                            {"role": "system", "content": "你是一位专业的化学分析专家，擅长分析化学反应机理和实验条件。请用简洁专业的语言回答。"},
-                            {"role": "user", "content": prompt}
-                        ],
-                        temperature=0.7,
-                        stream=False
-                    )
-                    
-                    # 保存分析结果
-                    st.session_state.ai_analysis = response.choices[0].message.content
-                    st.session_state.analysis_completed = True
-                    st.success('分析完成')
-                    
-                except Exception as e:
-                    error_msg = str(e).lower()
-                    if "api_key" in error_msg or "unauthorized" in error_msg:
-                        st.error("API密钥无效或未正确配置。请检查配置文件或环境变量中的API密钥。")
-                    else:
-                        st.error(f"AI分析出错：{str(e)}")
-                finally:
-                    st.session_state.analyzing = False
-                    st.rerun()
-        else:
-            # 如果未开始分析或分析完成，显示正常按钮
+            
+            response = client.chat.completions.create(
+                model="deepseek-chat",
+                messages=[
+                    {"role": "system", "content": "你是一位专业的化学分析专家，擅长分析化学反应机理和实验条件。请用简洁专业的语言回答。"},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.7,
+                stream=False
+            )
+            return response.choices[0].message.content
+
+        # 初始化分析状态
+        if 'analysis_completed' not in st.session_state:
+            st.session_state.analysis_completed = False
+
+        # 创建一个容器来显示结果
+        result_container = st.container()
+
+        # AI分析按钮和结果显示
+        with st.container():
             if st.button('AI建议', help='使用AI分析当前反应的类型、条件和机理', key='ai_analysis_button', use_container_width=True):
                 if not st.session_state.balanced_eq:
                     st.warning("请先输入并平衡化学方程式")
                 elif not DEEPSEEK_API_KEY or DEEPSEEK_API_KEY == "your-api-key-here":
-                    st.error("请先配置 Deepseek API 密钥。参考 README-zh-CN.md 中的配置说明。")
+                    st.error("请先配置 Deepseek API 密钥。参考 README.md 中的配置说明。")
                 else:
-                    st.session_state.analyzing = True
-                    st.rerun()
+                    try:
+                        with st.spinner('正在分析中...'):
+                            analysis_result = get_ai_analysis(str(st.session_state.balanced_eq))
+                            st.session_state.ai_analysis = analysis_result
+                            st.session_state.analysis_completed = True
+                    except Exception as e:
+                        error_msg = str(e).lower()
+                        if "api_key" in error_msg or "unauthorized" in error_msg:
+                            st.error("API密钥无效或未正确配置。请检查配置文件或环境变量中的API密钥。")
+                        else:
+                            st.error(f"AI分析出错：{str(e)}")
 
-        # 如果分析完成，显示结果
-        if st.session_state.ai_analysis:
-            st.markdown('#### 分析结果')
-            st.markdown(st.session_state.ai_analysis)
+        # 如果存在分析结果，显示在结果容器中
+        if st.session_state.get('ai_analysis') and st.session_state.analysis_completed:
+            with result_container:
+                st.success('分析完成')
+                st.markdown('#### 分析结果')
+                st.markdown(st.session_state.ai_analysis)
 
             # 只有在分析完成后才显示反应条件部分
             if st.session_state.analysis_completed:
@@ -511,8 +508,9 @@ if st.session_state.balanced_eq and 'all_substances' in st.session_state:
                         '数量',
                         min_value=1,
                         value=1,
-                        help='输入所需装置的数量'
-                    )                # 添加到列表按钮
+                        help='输入所需装置的数量'                    )
+                
+                # 添加到列表按钮
                 if st.button('添加到装置列表', help='将选择的装置添加到列表中', use_container_width=True):
                     if selected_apparatus:
                         new_apparatus = {'name': selected_apparatus, 'count': apparatus_count}
@@ -538,8 +536,10 @@ if st.session_state.balanced_eq and 'all_substances' in st.session_state:
                         cols[1].write(f"数量：{app['count']}")
                         if cols[2].button('删除', key=f"del_{app['name']}"):
                             st.session_state.apparatus.remove(app)
-                            st.rerun()                # 完成按钮
-                if st.button('完成', help='确认所有已选择的实验装置', use_container_width=True):
+                            st.rerun()
+                
+                # 完成按钮，使用绿色样式
+                if st.button('完成', help='确认所有已选择的实验装置', use_container_width=True, type='primary'):
                     if st.session_state.apparatus:
                         apparatus_str = '、'.join([f"{app['name']} {app['count']}个" for app in st.session_state.apparatus])
                         st.success(f'已确认实验装置：{apparatus_str}')
