@@ -8,6 +8,7 @@ import pandas as pd
 import os
 import sys
 from openai import OpenAI
+from datetime import datetime
 sys.path.append(os.path.abspath('.'))
 from chem_names_zh import chem_names_zh
 from balceapp.config import DEEPSEEK_API_KEY, DEEPSEEK_BASE_URL
@@ -585,47 +586,58 @@ if st.session_state.balanced_eq and 'all_substances' in st.session_state:
                 upload_dir = os.path.join(os.path.dirname(__file__), 'uploads')
                 if not os.path.exists(upload_dir):
                     os.makedirs(upload_dir)
-
-                uploaded_files = st.file_uploader(
-                    "上传实验相关文件（支持图片、文档等）",
-                    accept_multiple_files=True,
-                    type=['png', 'jpg', 'jpeg', 'pdf', 'doc', 'docx', 'xls', 'xlsx'],
-                    help="可以上传实验照片、数据表格、分析报告等相关文件"
-                )                # 初始化文件列表状态
+                
+                # 初始化文件列表状态
                 if 'file_list' not in st.session_state:
                     st.session_state.file_list = []
                 if 'last_upload_id' not in st.session_state:
                     st.session_state.last_upload_id = 0
-                
-                if uploaded_files:
-                    for file in uploaded_files:
-                        # 计算文件大小
-                        file_size = len(file.getvalue()) / 1024  # KB
-                        size_str = f"{file_size:.1f} KB" if file_size < 1024 else f"{file_size/1024:.1f} MB"
+
+                with st.form(key="file_upload_form"):
+                    uploaded_files = st.file_uploader(
+                        "上传实验相关文件（支持图片、文档等）",
+                        accept_multiple_files=True,
+                        type=['png', 'jpg', 'jpeg', 'pdf', 'doc', 'docx', 'xls', 'xlsx'],
+                        help="可以上传实验照片、数据表格、分析报告等相关文件"
+                    )
+                    
+                    submit_button = st.form_submit_button("上传文件", use_container_width=True)
+                    
+                    if submit_button and uploaded_files:
+                        # 获取已存在的文件列表
+                        existing_files = []
+                        for f in os.listdir(upload_dir):
+                            if '_' in f:
+                                orig_name = '_'.join(f.split('_')[1:])
+                                existing_files.append(orig_name)
                         
-                        # 生成文件保存路径
-                        timestamp = pd.Timestamp.now().strftime('%Y%m%d%H%M%S')
-                        safe_filename = re.sub(r'[^\w\-_\.]', '_', file.name)
-                        save_path = os.path.join(upload_dir, f"{timestamp}_{safe_filename}")
-                        
-                        # 保存文件
-                        with open(save_path, 'wb') as f:
-                            f.write(file.getvalue())
-                        
-                        # 显示文件信息和保存位置
-                        st.write(f"文件名：{file.name} （{size_str}）")
-                        st.success(f"文件已保存到：{os.path.basename(save_path)}")
-                        
-                    # 上传完成后，清空上传记录以准备下一次上传
-                    st.session_state.last_upload_id += 1
-                    uploaded_files.clear()
-                  # 更新文件列表（每次上传或删除后都会更新）
+                        for file in uploaded_files:
+                            # 检查文件是否已存在
+                            if file.name not in existing_files:
+                                # 生成唯一文件名
+                                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                                unique_filename = f"{timestamp}_{file.name}"
+                                file_path = os.path.join(upload_dir, unique_filename)
+                                
+                                # 保存文件
+                                with open(file_path, "wb") as f:
+                                    f.write(file.getbuffer())
+                                
+                                # 更新文件列表 - 存储完整的文件名
+                                st.session_state.file_list.append(unique_filename)
+                                st.session_state.last_upload_id += 1
+                                
+                                st.success(f"文件 {file.name} 上传成功！")
+                            else:
+                                st.warning(f"文件 {file.name} 已存在，已跳过上传。")
+                                
+                # 更新文件列表状态
                 if os.path.exists(upload_dir):
-                    current_files = sorted(os.listdir(upload_dir))  # 按文件名排序
-                    if current_files != st.session_state.file_list or 'files_to_refresh' in st.session_state:
-                        st.session_state.file_list = current_files
-                        if 'files_to_refresh' in st.session_state:
-                            del st.session_state.files_to_refresh
+                    # 确保file_list中的文件都存在
+                    st.session_state.file_list = [
+                        f for f in st.session_state.file_list 
+                        if os.path.exists(os.path.join(upload_dir, f))
+                    ]
 
                 # 显示已上传的文件列表
                 if st.session_state.file_list:
@@ -637,22 +649,94 @@ if st.session_state.balanced_eq and 'all_substances' in st.session_state:
                             file_path = os.path.join(upload_dir, filename)
                             if not os.path.exists(file_path):
                                 continue
-                                
+                            
+                            # 获取原始文件名（不带时间戳）
+                            display_name = '_'.join(filename.split('_')[1:])
+                            
                             file_size = os.path.getsize(file_path) / 1024  # KB
                             size_str = f"{file_size:.1f} KB" if file_size < 1024 else f"{file_size/1024:.1f} MB"
                             
-                            col1, col2 = st.columns([3, 1])
-                            col1.write(f"{filename}")
-                            if col2.button("删除", key=f"del_file_{filename}_{st.session_state.get('last_upload_id', 0)}"):
+                            # 创建三列布局显示文件信息和操作按钮
+                            col1, col2, col3 = st.columns([2, 1, 1])
+                            col1.write(f"{display_name} ({size_str})")
+                            
+                            # 添加查看按钮
+                            if any(display_name.lower().endswith(ext) for ext in ['.png', '.jpg', '.jpeg']):
+                                # 图片预览功能
+                                if col2.button("预览", key=f"view_{filename}"):
+                                    try:
+                                        image = open(file_path, 'rb').read()
+                                        st.image(image, caption=display_name)
+                                    except Exception as e:
+                                        st.error(f"预览图片时出错：{str(e)}")
+                            elif display_name.lower().endswith('.pdf'):
+                                # PDF预览功能
+                                if col2.button("查看", key=f"view_{filename}"):
+                                    try:
+                                        with open(file_path, "rb") as pdf_file:
+                                            PDFbyte = pdf_file.read()
+                                        st.download_button(
+                                            label="下载PDF",
+                                            data=PDFbyte,
+                                            file_name=display_name,
+                                            mime='application/octet-stream'
+                                        )
+                                    except Exception as e:
+                                        st.error(f"查看PDF时出错：{str(e)}")
+                            
+                            # 删除按钮
+                            if col3.button("删除", key=f"del_file_{filename}"):
                                 try:
                                     os.remove(file_path)
-                                    st.session_state.files_to_refresh = True
                                     st.session_state.file_list.remove(filename)
-                                    st.success(f"文件 {filename} 已成功删除")
+                                    st.success(f"文件 {display_name} 已成功删除")
                                     st.rerun()
                                 except Exception as e:
                                     st.error(f"删除文件时出错：{str(e)}")
 
+                # 提示用户
+                if not st.session_state.file_list:
+                    st.info("还没有上传任何文件。您可以上传实验相关的图片、文档等文件。")
+
                 # 保存按钮
                 if st.button('保存实验记录', type='primary', help='保存实验记录和上传的文件', use_container_width=True):
-                    st.success('实验记录已保存')
+                    # 保存实验记录到文件
+                    try:
+                        record_dir = os.path.join(os.path.dirname(__file__), 'records')
+                        if not os.path.exists(record_dir):
+                            os.makedirs(record_dir)
+                            
+                        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                        record_file = os.path.join(record_dir, f"experiment_record_{timestamp}.txt")
+                        
+                        with open(record_file, "w", encoding='utf-8') as f:
+                            f.write("化学方程式实验记录\n")
+                            f.write("=" * 50 + "\n\n")
+                            
+                            # 写入方程式
+                            if st.session_state.balanced_eq:
+                                f.write(f"平衡方程式：{str(st.session_state.balanced_eq)}\n\n")
+                            
+                            # 写入反应条件
+                            f.write("反应条件：\n")
+                            f.write(f"温度：{st.session_state.conditions['temperature']}℃\n")
+                            f.write(f"压力：{st.session_state.conditions['pressure']}atm\n")
+                            f.write(f"催化剂：{st.session_state.conditions['catalyst']}\n")
+                            f.write(f"加热：{'是' if st.session_state.conditions['heating'] else '否'}\n")
+                            f.write(f"光照：{'是' if st.session_state.conditions['lighting'] else '否'}\n")
+                            f.write(f"酸碱条件：{st.session_state.conditions['acid_base']}\n\n")
+                            
+                            # 写入实验记录
+                            f.write("实验记录：\n")
+                            f.write(st.session_state.experiment_notes)
+                            f.write("\n\n")
+                            
+                            # 写入相关文件列表
+                            if st.session_state.file_list:
+                                f.write("相关文件：\n")
+                                for filename in st.session_state.file_list:
+                                    f.write(f"- {filename}\n")
+                            
+                        st.success(f"实验记录已保存到：{record_file}")
+                    except Exception as e:
+                        st.error(f"保存实验记录时出错：{str(e)}")
