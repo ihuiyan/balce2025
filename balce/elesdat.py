@@ -599,5 +599,20 @@ elesdata = {
 		'number': None,
 		'element': 'exponent',
 		'weight': 0
+	},
+	'Ph': {
+		'number': None,
+		'element': 'phenyl',
+		'weight': 77.11  # C6H5的分子量
+	},
+	'Me': {
+		'number': None,
+		'element': 'methyl',
+		'weight': 15.03  # CH3的分子量
+	},
+	'Et': {
+		'number': None,
+		'element': 'ethyl',
+		'weight': 29.06  # C2H5的分子量
 	}
 }

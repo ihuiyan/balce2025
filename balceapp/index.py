@@ -90,11 +90,9 @@ if st.button('1. 平衡方程式'):
         # 平衡成功后，重新创建CQuestion对象并获取物质列表，保存到session_state
         question = balce.CQuestion(str(st.session_state.balanced_eq))
         left_substances, conf, right_substances = balce.splitCE(str(st.session_state.balanced_eq), to_mal=True)
-        with open('log.txt', 'a', encoding='utf-8') as f:
-            f.write(f"left_substances: {left_substances}\n")
-            f.write(f"right_substances: {right_substances}\n")
-            all_substances_repr = [('left', i, s) for i, s in enumerate(left_substances)] + [('right', i, s) for i, s in enumerate(right_substances)]
-            f.write(f"all_substances: {repr(all_substances_repr)}\n")
+        # 只记录配平后的方程式
+        with open('balanced_equations.txt', 'a', encoding='utf-8') as f:
+            f.write(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} - {str(st.session_state.balanced_eq)}\n")
         st.session_state.all_substances = [('left', i, s) for i, s in enumerate(left_substances)] + [('right', i, s) for i, s in enumerate(right_substances)]
         st.success(f'平衡后的方程式：{eq}')
     except Exception as e:

@@ -80,7 +80,7 @@ _EXPONENT_FORMAT_UNI = reCOMPILE(
 	SuperscriptTable.join('[]') + '+')
 	
 _COUNT_ELEMENT_NOR = reCOMPILE(
-	r'([A-Z?][a-z]?)([\d.]*)|([\[(])|([)\]])([\d.]*)')
+	r'([A-Z?][a-z]{0,2}|Ph|Me|Et)([\d.]*)|([\[(])|([)\]])([\d.]*)')
 
 from .contexts import bct
 from .utils import CStyle
