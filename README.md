@@ -104,7 +104,7 @@ print(fla)
 ## Web界面操作
 
 ### 基本使用
-`streamlit run balceapp/index.py`
+双击执行start_balce.bat文件
 
 ### 配置AI分析功能
 1. 安装必要的依赖：

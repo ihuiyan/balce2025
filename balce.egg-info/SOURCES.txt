@@ -21,6 +21,6 @@ balce.egg-info/dependency_links.txt
 balce.egg-info/entry_points.txt
 balce.egg-info/requires.txt
 balce.egg-info/top_level.txt
+balceapp/config.py
 balceapp/index.py
 balceapp/utils.py
-tests/test_balance.py
