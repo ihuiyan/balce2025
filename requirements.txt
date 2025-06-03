@@ -2,7 +2,7 @@
 fmatx
 
 # 可选依赖(GUI功能)
-# balceapp
+balce
 # toga
 
 # Python版本要求
