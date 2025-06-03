@@ -1,9 +1,9 @@
 # 核心依赖
-fmatx
+fmatx>=1.0.0
 
 # 可选依赖(GUI功能)
-balce
-# toga
+balceapp>=1.2.0
+toga>=0.3.0
 
 # Python版本要求
-# python>=3.8
+python>=3.8
